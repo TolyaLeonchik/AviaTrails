@@ -1,4 +1,4 @@
-package com.site.aviatrails.domain;
+package com.site.aviatrails.domain.tickets;
 
 import jakarta.persistence.*;
 import lombok.Data;
