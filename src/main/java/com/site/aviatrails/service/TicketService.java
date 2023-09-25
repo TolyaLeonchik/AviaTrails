@@ -36,6 +36,7 @@ public class TicketService {
     }
 
     //TODO: нужно ли админам полная как в этом методе информация об всех забронированных билетах?
+    //TODO: нужно ли тоже сделать поиски через Optional?
     public List<UserTicketInfo> getUserTicketsInfo(Long id) {
         List<Long> ticketsIds = ticketRepository.findIdsByPassengerId(id);
         List<UserTicketInfo> userTicketsInfo = new ArrayList<>();
@@ -43,7 +44,7 @@ public class TicketService {
 
         for (Long ticketId : ticketsIds) {
             UserTicketInfo userTicketInfo = new UserTicketInfo();
-            Optional<Ticket> ticketOptional = ticketRepository.findById(Math.toIntExact(ticketId));
+            Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
             Optional<Flight> flight = Optional.empty();
             //TODO: как лучше сделать проверку
             if (ticketOptional.isPresent()) {
@@ -63,6 +64,7 @@ public class TicketService {
                 userTicketInfo.setAirlineName(airlinesRepository.findAirlineNameById(airlineId));
 
                 //TODO: подправить информацию о городе выезда/приезда, возможно и порты добавить
+                //TODO: обраный билет + багаж (булеан + к цене за билет
                 userTicketInfo.setPortCityFrom(airportsRepository.findPortNameById(fromId));
                 userTicketInfo.setPortCityTo(airportsRepository.findPortNameById(toId));
 
@@ -91,6 +93,7 @@ public class TicketService {
         //TODO:
         /** DONE*///CКОЛЬКО БИЛЕТОВ ПОКУПАЮТ
         /** DONE*///Проверка есть ли места для этого рейса
+        //Проверка есть ли такой юзер наверное чтобы null не передавашка
 
 
         Ticket ticket = new Ticket();
@@ -114,6 +117,17 @@ public class TicketService {
         flightRepository
                 .updateNumberOfFreeSeatsById(ticket.getSeatNumber() - bookingTicketDTO.getCountOfTickets(), flightId);
         ticketRepository.save(ticket);
+    }
 
+    public void refundTicket(Long id) {
+        Optional<Ticket> ticket = ticketRepository.findById(id);
+        Optional<Flight> flight = flightRepository.findById(ticket.get().getFlightId());
+        flight.get().setNumberOfFreeSeats(flight.get().getNumberOfFreeSeats() + ticket.get().getNumberOfTickets());
+
+        //TODO:      нужна ли логика для списывания/возврата денег на карту?  Ticket refundMoney(ticket.get().getTicketPrice());
+        if (ticket.isPresent() && flight.isPresent()) {
+            ticketRepository.delete(ticket.get());
+            flightRepository.saveAndFlush(flight.get());
+        }
     }
 }

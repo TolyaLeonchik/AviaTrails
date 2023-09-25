@@ -6,6 +6,7 @@ import com.site.aviatrails.domain.tickets.UserTicketInfo;
 import com.site.aviatrails.service.TicketService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,5 +50,11 @@ public class TicketController {
     public ResponseEntity<HttpStatus> bookingTicket(@RequestBody BookingTicketDTO bookingTicketDTO) {
         ticketService.bookingTicket(bookingTicketDTO);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/refund/{id}")
+    public ResponseEntity<HttpStatus> refundTicket(@PathVariable Long id) {
+        ticketService.refundTicket(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

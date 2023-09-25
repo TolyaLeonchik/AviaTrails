@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface TicketRepository extends JpaRepository<Ticket, Integer> {
+public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT t FROM ticket_table t WHERE t.passengerId=:id")
     List<Ticket> findByPassengerId(Long id);
     @Query("SELECT t.id FROM ticket_table t WHERE t.passengerId=:id")

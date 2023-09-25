@@ -12,7 +12,7 @@ public class Airline {
     @Id
     @SequenceGenerator(name = "SeqGenLines", sequenceName = "airlines_id_seq", allocationSize = 1)
     @GeneratedValue(generator = "SeqGenLines")
-    private Integer id;
+    private Long id;
 
     @Column(name = "airline_name")
     private String airlineName;
