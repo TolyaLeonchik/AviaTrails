@@ -1,12 +1,15 @@
 package com.site.aviatrails.repository;
 
 import com.site.aviatrails.domain.Flight;
+import com.site.aviatrails.domain.FlightInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -32,4 +35,8 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
 
     @Query("select a.airlineId FROM flight_table a WHERE a.id=:flightId")
     Long findAirlineById(long flightId);
+        // нужные
+
+    @Query("select id from flight_table")
+    List<Long> findAllIds();
 }

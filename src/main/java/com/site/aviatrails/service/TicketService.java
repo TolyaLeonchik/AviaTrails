@@ -1,5 +1,6 @@
 package com.site.aviatrails.service;
 //TODO:Все звёзды переделать
+
 import com.site.aviatrails.domain.*;
 import com.site.aviatrails.domain.tickets.BookingTicketDTO;
 import com.site.aviatrails.domain.tickets.Ticket;
@@ -20,6 +21,8 @@ public class TicketService {
     private final AirlinesRepository airlinesRepository;
     private final FlightRepository flightRepository;
     private final UserRepository userRepository;
+
+    private static final long BOOKING_TIME_LIMIT_MS = 15 * 60 * 1000;
 
     public TicketService(TicketRepository ticketRepository, AirportsRepository airportsRepository,
                          AirlinesRepository airlinesRepository, FlightRepository flightRepository,
@@ -87,6 +90,12 @@ public class TicketService {
         return availableSeats >= 0;
     }
 
+    public boolean isBookingTimeExpired(long bookingStartTime) {
+        long currentTime = System.currentTimeMillis();
+        long elapsedTime = currentTime - bookingStartTime;
+        return elapsedTime > BOOKING_TIME_LIMIT_MS;
+    }
+
     @Transactional(rollbackFor = Exception.class)   //откатка
     public void bookingTicket(BookingTicketDTO bookingTicketDTO) {
         //Нужно правильно раздать всем бд информацию
@@ -97,6 +106,7 @@ public class TicketService {
 
 
         Ticket ticket = new Ticket();
+        long bookingStartTime = System.currentTimeMillis();
 
         Long flightId = flightRepository.
                 findIdByFromAirportIdAndToAirportId(airportsRepository.
@@ -116,7 +126,13 @@ public class TicketService {
 
         flightRepository
                 .updateNumberOfFreeSeatsById(ticket.getSeatNumber() - bookingTicketDTO.getCountOfTickets(), flightId);
-        ticketRepository.save(ticket);
+
+        if (!isBookingTimeExpired(bookingStartTime)) {
+            ticketRepository.save(ticket);
+        } else {
+            //TODO: EXCEPTION TIME_EXPIRED
+            System.out.println("TIME EXPIRED, sorry");
+        }
     }
 
     public void refundTicket(Long id) {

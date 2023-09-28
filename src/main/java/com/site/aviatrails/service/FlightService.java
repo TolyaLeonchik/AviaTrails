@@ -1,15 +1,15 @@
 package com.site.aviatrails.service;
 
-import com.site.aviatrails.domain.Airline;
-import com.site.aviatrails.domain.Airport;
-import com.site.aviatrails.domain.Flight;
-import com.site.aviatrails.domain.FlightInfo;
+import com.site.aviatrails.domain.*;
+import com.site.aviatrails.domain.tickets.UserTicketInfo;
 import com.site.aviatrails.repository.AirlinesRepository;
 import com.site.aviatrails.repository.AirportsRepository;
 import com.site.aviatrails.repository.FlightRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,5 +62,41 @@ public class FlightService {
             flightInfo.setFlightDurationInHours(seconds / 3600.0);
         }
         return flightInfo;
+    }
+
+    public List<FlightInfo> findByParameters(String cityOfDeparture, String cityOfArrival, Date date) {
+        List<Long> airportsOfDeparture = airportsRepository.findIdByPortCity(cityOfDeparture);
+        List<Long> airportsOfArrival = airportsRepository.findIdByPortCity(cityOfArrival);
+        List<Long> searchDeparture = new ArrayList<>();
+        List<Long> searchArrival = new ArrayList<>();
+        List<FlightInfo> flightSearchResult = new ArrayList<>();
+
+        List<Long> flightAll = flightRepository.findAllIds();
+
+        for (Long flightId : flightAll) {
+            Optional<Flight> flightSearch = flightRepository.findById(flightId);
+            for (Long departure : airportsOfDeparture) {
+                if (flightSearch.isPresent() && flightSearch.get().getFromAirportId().equals(departure)) {
+                    Long searchIdDeparture = flightSearch.get().getId();
+                    searchDeparture.add(searchIdDeparture);
+                }
+            }
+        }
+
+        for (Long flightId : searchDeparture) {
+            Optional<Flight> flightSearch = flightRepository.findById(flightId);
+            for (Long departure : airportsOfArrival) {
+                if (flightSearch.isPresent() && flightSearch.get().getToAirportId().equals(departure)) {
+                    Long searchIdDeparture = flightSearch.get().getId();
+                    searchArrival.add(searchIdDeparture);
+                }
+            }
+        }
+
+        for (Long flightId : searchArrival) {
+            FlightInfo flightInfo = findById(flightId);
+            flightSearchResult.add(flightInfo);
+        }
+        return flightSearchResult;
     }
 }

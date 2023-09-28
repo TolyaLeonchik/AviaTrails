@@ -5,13 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+import java.util.List;
+
 @Repository
 public interface AirportsRepository extends JpaRepository<Airport, Long> {
     @Query("select a.id FROM airports a where a.portName=:portName and a.portCity=:portCity")
     Long findIdByPortNameAndPortCity(String portName, String portCity);
 
     @Query("select a.id FROM airports a where a.portCity=:portCity")
-    Long findIdByPortCity(String portCity);
+    List<Long> findIdByPortCity(String portCity);
 
     @Query("select a.portName from airports a WHERE a.id=:id")
     String findPortNameById(long id);
