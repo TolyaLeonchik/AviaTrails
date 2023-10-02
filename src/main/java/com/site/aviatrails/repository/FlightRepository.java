@@ -1,21 +1,20 @@
 package com.site.aviatrails.repository;
 
 import com.site.aviatrails.domain.Flight;
-import com.site.aviatrails.domain.FlightInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface FlightRepository extends JpaRepository<Flight, Long> {
-    @Query("select a.id FROM flight_table a WHERE a.fromAirportId=:from AND a.toAirportId=:to")
-    Long findIdByFromAirportIdAndToAirportId(Long from, Long to);
+    @Query("select a.id FROM flight_table a WHERE a.fromAirportId=:from AND a.toAirportId=:to AND a.departureTime=:dateTime")
+    Long findIdByParameters(Long from, Long to, LocalDateTime dateTime);
 
     @Query("select a.numberOfFreeSeats FROM flight_table a WHERE a.id=:id")
     Integer findNumberOfFreeSeatsById(Long id);
@@ -39,4 +38,7 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
 
     @Query("select id from flight_table")
     List<Long> findAllIds();
+
+    @Query("select a.id from flight_table a where DATE(a.departureTime)=:departureDate")
+    List<Long> findIdsByDate(LocalDate departureDate);
 }

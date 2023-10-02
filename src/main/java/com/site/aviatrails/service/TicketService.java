@@ -106,16 +106,20 @@ public class TicketService {
 
 
         Ticket ticket = new Ticket();
+        Ticket returningTicket = new Ticket();
         long bookingStartTime = System.currentTimeMillis();
 
         Long flightId = flightRepository.
-                findIdByFromAirportIdAndToAirportId(airportsRepository.
+                findIdByParameters(airportsRepository.
                                 findIdByPortNameAndPortCity(bookingTicketDTO.getPortNameFrom(), bookingTicketDTO.getPortCityFrom()),
-                        airportsRepository.findIdByPortNameAndPortCity(bookingTicketDTO.getPortNameTo(), bookingTicketDTO.getPortCityTo()));
+                        airportsRepository.findIdByPortNameAndPortCity(bookingTicketDTO.getPortNameTo(), bookingTicketDTO.getPortCityTo()),
+                        bookingTicketDTO.getDepartureTime());
         if (!checkAvailableSeats(flightId, bookingTicketDTO.getCountOfTickets())) {
             System.out.println("No free seats!");
             return;
         }
+
+        checkExistingFlight(flightId);
 
         ticket.setFlightId(flightId);
         ticket.setPassengerId(userRepository
@@ -127,11 +131,46 @@ public class TicketService {
         flightRepository
                 .updateNumberOfFreeSeatsById(ticket.getSeatNumber() - bookingTicketDTO.getCountOfTickets(), flightId);
 
+        if (bookingTicketDTO.isReturnTicket()) {
+
+            Long flightReturningId = flightRepository.
+                    findIdByParameters(airportsRepository.
+                                    findIdByPortNameAndPortCity(bookingTicketDTO.getReturnPortNameFrom(), bookingTicketDTO.getReturnPortCityFrom()),
+                            airportsRepository.findIdByPortNameAndPortCity(bookingTicketDTO.getReturnPortNameTo(), bookingTicketDTO.getReturnPortCityTo()),
+                            bookingTicketDTO.getReturnDepartureTime());
+
+            if (!checkAvailableSeats(flightReturningId, bookingTicketDTO.getReturnCountOfTickets())) {
+                System.out.println("No free seats!");
+                return;
+            }
+
+            checkExistingFlight(flightReturningId);
+
+            returningTicket.setFlightId(flightReturningId);
+            returningTicket.setPassengerId(ticket.getPassengerId());
+            returningTicket.setTicketPrice(flightRepository.findFlightPriceById(flightReturningId) * bookingTicketDTO.getReturnCountOfTickets());
+            returningTicket.setSeatNumber(flightRepository.findNumberOfFreeSeatsById(flightReturningId));
+            returningTicket.setNumberOfTickets(bookingTicketDTO.getReturnCountOfTickets());
+
+            flightRepository
+                    .updateNumberOfFreeSeatsById(returningTicket.getSeatNumber() - bookingTicketDTO.getReturnCountOfTickets(), flightReturningId);
+
+        }
+
         if (!isBookingTimeExpired(bookingStartTime)) {
             ticketRepository.save(ticket);
+            if (bookingTicketDTO.isReturnTicket()) {
+                ticketRepository.save(returningTicket);
+            }
         } else {
             //TODO: EXCEPTION TIME_EXPIRED
             System.out.println("TIME EXPIRED, sorry");
+        }
+    }
+
+    private void checkExistingFlight(Long flightId) {
+        if (flightId == null) {
+            return;
         }
     }
 

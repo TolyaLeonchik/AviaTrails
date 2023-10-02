@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -43,7 +44,8 @@ public class FlightController {
     @GetMapping("/search")
     public ResponseEntity<List<FlightInfo>> getFlightByParameters(@RequestParam("cityOfDeparture") String cityOfDeparture,
                                                             @RequestParam("cityOfArrival") String cityOfArrival,
-                                                            @RequestParam("date")  @DateTimeFormat(pattern="yyyy-MM-dd")Date date) {
+                                                            @RequestParam("date") @DateTimeFormat(pattern="yyyy-MM-dd")
+                                                                      LocalDate date) {
         List<FlightInfo> flightInfoSearch = flightService.findByParameters(cityOfDeparture, cityOfArrival, date);
         if (flightInfoSearch.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

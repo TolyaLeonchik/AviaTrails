@@ -1,15 +1,15 @@
 package com.site.aviatrails.service;
 
 import com.site.aviatrails.domain.*;
-import com.site.aviatrails.domain.tickets.UserTicketInfo;
 import com.site.aviatrails.repository.AirlinesRepository;
 import com.site.aviatrails.repository.AirportsRepository;
 import com.site.aviatrails.repository.FlightRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,14 +64,14 @@ public class FlightService {
         return flightInfo;
     }
 
-    public List<FlightInfo> findByParameters(String cityOfDeparture, String cityOfArrival, Date date) {
+    public List<FlightInfo> findByParameters(String cityOfDeparture, String cityOfArrival, LocalDate date) {
         List<Long> airportsOfDeparture = airportsRepository.findIdByPortCity(cityOfDeparture);
         List<Long> airportsOfArrival = airportsRepository.findIdByPortCity(cityOfArrival);
         List<Long> searchDeparture = new ArrayList<>();
         List<Long> searchArrival = new ArrayList<>();
         List<FlightInfo> flightSearchResult = new ArrayList<>();
 
-        List<Long> flightAll = flightRepository.findAllIds();
+        List<Long> flightAll = flightRepository.findIdsByDate(date);
 
         for (Long flightId : flightAll) {
             Optional<Flight> flightSearch = flightRepository.findById(flightId);
@@ -85,8 +85,8 @@ public class FlightService {
 
         for (Long flightId : searchDeparture) {
             Optional<Flight> flightSearch = flightRepository.findById(flightId);
-            for (Long departure : airportsOfArrival) {
-                if (flightSearch.isPresent() && flightSearch.get().getToAirportId().equals(departure)) {
+            for (Long arrival : airportsOfArrival) {
+                if (flightSearch.isPresent() && flightSearch.get().getToAirportId().equals(arrival)) {
                     Long searchIdDeparture = flightSearch.get().getId();
                     searchArrival.add(searchIdDeparture);
                 }
