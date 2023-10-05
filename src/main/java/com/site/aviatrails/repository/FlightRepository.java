@@ -20,7 +20,7 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
     Integer findNumberOfFreeSeatsById(Long id);
 
     @Query("select a.flightPrice FROM flight_table a WHERE a.id=:id")
-    Long findFlightPriceById(Long id);
+    Integer findFlightPriceById(Long id);
 
     @Modifying
     @Query("UPDATE flight_table a SET a.numberOfFreeSeats=:updateNumber WHERE a.id=:id")
@@ -41,4 +41,7 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
 
     @Query("select a.id from flight_table a where DATE(a.departureTime)=:departureDate")
     List<Long> findIdsByDate(LocalDate departureDate);
+
+    @Query("select a.id from flight_table a where a.fromAirportId=:from AND a.toAirportId=:to AND DATE(a.departureTime)=:departureDate")
+    List<Long> findIdsByCityFromAndCityToAndLocalDate(List<Long> from, List<Long> to, LocalDate departureDate);
 }

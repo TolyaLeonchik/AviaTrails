@@ -1,11 +1,27 @@
 package com.site.aviatrails.service;
 //TODO:Все звёзды переделать
 
-import com.site.aviatrails.domain.*;
+
+import com.site.aviatrails.domain.CardInfo;
+import com.site.aviatrails.domain.Flight;
+import com.site.aviatrails.domain.PaymentDTO;
+import com.site.aviatrails.domain.UserInfo;
 import com.site.aviatrails.domain.tickets.BookingTicketDTO;
 import com.site.aviatrails.domain.tickets.Ticket;
 import com.site.aviatrails.domain.tickets.UserTicketInfo;
-import com.site.aviatrails.repository.*;
+
+import com.site.aviatrails.exception.BookingTimeExpiredException;
+import com.site.aviatrails.exception.InsufficientFunds;
+import com.site.aviatrails.exception.NoTicketsFoundException;
+import com.site.aviatrails.exception.TicketAlreadyPaidException;
+
+import com.site.aviatrails.repository.AirlinesRepository;
+import com.site.aviatrails.repository.AirportsRepository;
+import com.site.aviatrails.repository.FlightRepository;
+import com.site.aviatrails.repository.PaymentHistoryRepository;
+import com.site.aviatrails.repository.TicketRepository;
+import com.site.aviatrails.repository.UserRepository;
+import com.site.aviatrails.validator.BookingValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,17 +37,19 @@ public class TicketService {
     private final AirlinesRepository airlinesRepository;
     private final FlightRepository flightRepository;
     private final UserRepository userRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
 
     private static final long BOOKING_TIME_LIMIT_MS = 15 * 60 * 1000;
 
     public TicketService(TicketRepository ticketRepository, AirportsRepository airportsRepository,
                          AirlinesRepository airlinesRepository, FlightRepository flightRepository,
-                         UserRepository userRepository) {
+                         UserRepository userRepository, PaymentHistoryRepository paymentHistoryRepository) {
         this.ticketRepository = ticketRepository;
         this.airportsRepository = airportsRepository;
         this.airlinesRepository = airlinesRepository;
         this.flightRepository = flightRepository;
         this.userRepository = userRepository;
+        this.paymentHistoryRepository = paymentHistoryRepository;
     }
 
     public List<Ticket> getAllTickets() {
@@ -41,6 +59,10 @@ public class TicketService {
     //TODO: нужно ли админам полная как в этом методе информация об всех забронированных билетах?
     //TODO: нужно ли тоже сделать поиски через Optional?
     public List<UserTicketInfo> getUserTicketsInfo(Long id) {
+        BookingValidator bookingValidator = new BookingValidator();
+        bookingValidator.validateTicketExistenceByPassengerId(ticketRepository.findIdsByPassengerId(id));
+        bookingValidator.validateUserExistence(id);
+
         List<Long> ticketsIds = ticketRepository.findIdsByPassengerId(id);
         List<UserTicketInfo> userTicketsInfo = new ArrayList<>();
         Optional<UserInfo> userInfo = userRepository.findById(id);
@@ -54,8 +76,6 @@ public class TicketService {
                 flight = flightRepository.findById(ticketOptional.get().getFlightId());
             }
 
-            //TODO: лучше через @Query или через Optional.get().getExample()?
-            /** Optional*/
             long flightId = ticketRepository.findFlightIdById(ticketId);
             long airlineId = flightRepository.findAirlineById(flightId);
             long fromId = flightRepository.findFromAirportIdById(flightId);
@@ -66,7 +86,6 @@ public class TicketService {
                 userTicketInfo.setLastName(userInfo.get().getLastName());
                 userTicketInfo.setAirlineName(airlinesRepository.findAirlineNameById(airlineId));
 
-                //TODO: подправить информацию о городе выезда/приезда, возможно и порты добавить
                 //TODO: обраный билет + багаж (булеан + к цене за билет
                 userTicketInfo.setPortCityFrom(airportsRepository.findPortNameById(fromId));
                 userTicketInfo.setPortCityTo(airportsRepository.findPortNameById(toId));
@@ -83,30 +102,9 @@ public class TicketService {
         return userTicketsInfo;
     }
 
-    //TODO: нужно ли вызывать отдельно этот метод?
-    public boolean checkAvailableSeats(Long flightId, Integer bookedSeats) {
-        int totalSeats = flightRepository.findNumberOfFreeSeatsById(flightId);
-        int availableSeats = totalSeats - bookedSeats;
-        return availableSeats >= 0;
-    }
-
-    public boolean isBookingTimeExpired(long bookingStartTime) {
-        long currentTime = System.currentTimeMillis();
-        long elapsedTime = currentTime - bookingStartTime;
-        return elapsedTime > BOOKING_TIME_LIMIT_MS;
-    }
-
-    @Transactional(rollbackFor = Exception.class)   //откатка
+    @Transactional(rollbackFor = Exception.class)
     public void bookingTicket(BookingTicketDTO bookingTicketDTO) {
-        //Нужно правильно раздать всем бд информацию
-        //TODO:
-        /** DONE*///CКОЛЬКО БИЛЕТОВ ПОКУПАЮТ
-        /** DONE*///Проверка есть ли места для этого рейса
-        //Проверка есть ли такой юзер наверное чтобы null не передавашка
 
-
-        Ticket ticket = new Ticket();
-        Ticket returningTicket = new Ticket();
         long bookingStartTime = System.currentTimeMillis();
 
         Long flightId = flightRepository.
@@ -114,13 +112,41 @@ public class TicketService {
                                 findIdByPortNameAndPortCity(bookingTicketDTO.getPortNameFrom(), bookingTicketDTO.getPortCityFrom()),
                         airportsRepository.findIdByPortNameAndPortCity(bookingTicketDTO.getPortNameTo(), bookingTicketDTO.getPortCityTo()),
                         bookingTicketDTO.getDepartureTime());
-        if (!checkAvailableSeats(flightId, bookingTicketDTO.getCountOfTickets())) {
-            System.out.println("No free seats!");
-            return;
+        Long flightReturningId = null;
+
+        BookingValidator bookingValidator = new BookingValidator();
+        bookingValidator.validateFlightExistence(flightId);
+        bookingValidator.validateUserExistence(userRepository
+                .findIdByFirstNameAndLastName(bookingTicketDTO.getFirstName(), bookingTicketDTO.getLastName()));
+        bookingValidator.validateSeatAvailability(flightRepository.findNumberOfFreeSeatsById(flightId), bookingTicketDTO.getCountOfTickets());
+
+        if (bookingTicketDTO.isReturnTicket()) {
+            flightReturningId = flightRepository.
+                    findIdByParameters(airportsRepository.
+                                    findIdByPortNameAndPortCity(bookingTicketDTO.getReturnPortNameFrom(), bookingTicketDTO.getReturnPortCityFrom()),
+                            airportsRepository.findIdByPortNameAndPortCity(bookingTicketDTO.getReturnPortNameTo(), bookingTicketDTO.getReturnPortCityTo()),
+                            bookingTicketDTO.getReturnDepartureTime());
+            bookingValidator.validateFlightExistence(flightReturningId);
+            bookingValidator.validateSeatAvailability(flightRepository.findNumberOfFreeSeatsById(flightReturningId), bookingTicketDTO.getReturnCountOfTickets());
         }
 
-        checkExistingFlight(flightId);
+        Ticket ticket = new Ticket();
+        Ticket returningTicket = bookingTicketDTO.isReturnTicket() ? new Ticket() : null;
 
+        ticketFactory(ticket, returningTicket, flightId, flightReturningId, bookingTicketDTO);
+
+        if (bookingValidator.validateBookingTime(bookingStartTime, BOOKING_TIME_LIMIT_MS)) {
+            throw new BookingTimeExpiredException();
+        }
+
+        ticketRepository.save(ticket);
+
+        if (bookingTicketDTO.isReturnTicket() && returningTicket != null) {
+            ticketRepository.save(returningTicket);
+        }
+    }
+
+    private void ticketFactory(Ticket ticket, Ticket returningTicket, Long flightId, Long flightReturningId, BookingTicketDTO bookingTicketDTO) {
         ticket.setFlightId(flightId);
         ticket.setPassengerId(userRepository
                 .findIdByFirstNameAndLastName(bookingTicketDTO.getFirstName(), bookingTicketDTO.getLastName()));
@@ -133,18 +159,9 @@ public class TicketService {
 
         if (bookingTicketDTO.isReturnTicket()) {
 
-            Long flightReturningId = flightRepository.
-                    findIdByParameters(airportsRepository.
-                                    findIdByPortNameAndPortCity(bookingTicketDTO.getReturnPortNameFrom(), bookingTicketDTO.getReturnPortCityFrom()),
-                            airportsRepository.findIdByPortNameAndPortCity(bookingTicketDTO.getReturnPortNameTo(), bookingTicketDTO.getReturnPortCityTo()),
-                            bookingTicketDTO.getReturnDepartureTime());
-
-            if (!checkAvailableSeats(flightReturningId, bookingTicketDTO.getReturnCountOfTickets())) {
-                System.out.println("No free seats!");
-                return;
-            }
-
-            checkExistingFlight(flightReturningId);
+            BookingValidator bookingValidator = new BookingValidator();
+            bookingValidator.validateFlightExistence(flightReturningId);
+            bookingValidator.validateSeatAvailability(flightRepository.findNumberOfFreeSeatsById(flightReturningId), bookingTicketDTO.getReturnCountOfTickets());
 
             returningTicket.setFlightId(flightReturningId);
             returningTicket.setPassengerId(ticket.getPassengerId());
@@ -156,33 +173,86 @@ public class TicketService {
                     .updateNumberOfFreeSeatsById(returningTicket.getSeatNumber() - bookingTicketDTO.getReturnCountOfTickets(), flightReturningId);
 
         }
+    }
 
-        if (!isBookingTimeExpired(bookingStartTime)) {
-            ticketRepository.save(ticket);
-            if (bookingTicketDTO.isReturnTicket()) {
-                ticketRepository.save(returningTicket);
+    @Transactional(rollbackFor = Exception.class)
+    public void payment(Long passengerId, CardInfo cardInfo) throws InsufficientFunds {
+        List<Ticket> unpaidTickets = getUnpaidTickets(passengerId);
+
+        int price = calculatePrice(unpaidTickets);
+
+        if (cardInfo.getBalance() < price) {
+            throw new InsufficientFunds();
+        }
+
+        for (Ticket ticket : unpaidTickets) {
+            PaymentDTO paymentDTO = createPayment(ticket, cardInfo);
+            paymentHistoryRepository.save(paymentDTO);
+        }
+        cardInfo.setBalance(cardInfo.getBalance() - price);
+    }
+
+    private int calculatePrice(List<Ticket> unpaidTickets) {
+        if (unpaidTickets.isEmpty()) {
+            throw new NoTicketsFoundException();
+        }
+
+        int price = 0;
+
+        for (Ticket ticket : unpaidTickets) {
+            price = price + ticket.getTicketPrice();
+        }
+        return price;
+    }
+
+    private PaymentDTO createPayment(Ticket ticket, CardInfo cardInfo) {
+        PaymentDTO paymentDTO = new PaymentDTO();
+        paymentDTO.setTicketId(ticket.getId());
+        paymentDTO.setPassengerId(ticket.getPassengerId());
+        paymentDTO.setCardNumber(cardInfo.getNumberCard());
+
+        return paymentDTO;
+    }
+
+    private List<Ticket> getUnpaidTickets(Long passengerId) {
+        List<Ticket> passengerTickets = ticketRepository.findByPassengerId(passengerId);
+        List<Ticket> unpaidTickets = new ArrayList<>();
+
+        for (Ticket ticket : passengerTickets) {
+            if (!paymentHistoryRepository.existsByTicketId(ticket.getId())) {
+                unpaidTickets.add(ticket);
             }
-        } else {
-            //TODO: EXCEPTION TIME_EXPIRED
-            System.out.println("TIME EXPIRED, sorry");
         }
+
+        if (unpaidTickets.isEmpty()) {
+            throw new TicketAlreadyPaidException();
+        }
+        return unpaidTickets;
     }
 
-    private void checkExistingFlight(Long flightId) {
-        if (flightId == null) {
-            return;
-        }
-    }
-
+    @Transactional(rollbackFor = Exception.class)
     public void refundTicket(Long id) {
+        BookingValidator bookingValidator = new BookingValidator();
+        bookingValidator.validateTicketExistence(ticketRepository.existsById(id));
+        bookingValidator.validatePaymentExistence(paymentHistoryRepository.existsByTicketId(id));
+
         Optional<Ticket> ticket = ticketRepository.findById(id);
+        Optional<PaymentDTO> paymentDTO = paymentHistoryRepository.findByTicketId(id);
+
+        flightRefund(ticket);
+        refundPayment(ticket, paymentDTO);
+        ticketRepository.delete(ticket.get());
+    }
+
+    private void refundPayment(Optional<Ticket> ticket, Optional<PaymentDTO> paymentDTO) {
+        CardInfo cardInfo = new CardInfo();
+        cardInfo.setNumberCard(paymentDTO.get().getCardNumber());
+        cardInfo.setBalance(cardInfo.getBalance() + ticket.get().getTicketPrice());
+    }
+
+    private void flightRefund(Optional<Ticket> ticket) {
         Optional<Flight> flight = flightRepository.findById(ticket.get().getFlightId());
         flight.get().setNumberOfFreeSeats(flight.get().getNumberOfFreeSeats() + ticket.get().getNumberOfTickets());
-
-        //TODO:      нужна ли логика для списывания/возврата денег на карту?  Ticket refundMoney(ticket.get().getTicketPrice());
-        if (ticket.isPresent() && flight.isPresent()) {
-            ticketRepository.delete(ticket.get());
-            flightRepository.saveAndFlush(flight.get());
-        }
+        flightRepository.saveAndFlush(flight.get());
     }
 }

@@ -27,5 +27,5 @@ public class Ticket {
     private Integer numberOfTickets;
 
     @Column(name = "ticket_price")
-    private Long ticketPrice;
+    private Integer ticketPrice;
 }

@@ -15,5 +15,5 @@ public class UserTicketInfo {
     private LocalDateTime arrivalTime;
     private Integer numberOfTickets;
     private Integer seatNumber;
-    private Long ticketPrice;
+    private Integer ticketPrice;
 }

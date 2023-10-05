@@ -1,8 +1,10 @@
 package com.site.aviatrails.controller;
 
+import com.site.aviatrails.domain.CardInfo;
 import com.site.aviatrails.domain.tickets.BookingTicketDTO;
 import com.site.aviatrails.domain.tickets.Ticket;
 import com.site.aviatrails.domain.tickets.UserTicketInfo;
+import com.site.aviatrails.exception.InsufficientFunds;
 import com.site.aviatrails.service.TicketService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +28,7 @@ public class TicketController {
         this.ticketService = ticketService;
     }
 
-    @GetMapping
+    @GetMapping("/allTickets")
     public ResponseEntity<List<Ticket>> getTickets() {
         List<Ticket> tickets = ticketService.getAllTickets();
         if (tickets.isEmpty()) {
@@ -49,6 +51,12 @@ public class TicketController {
     @PostMapping
     public ResponseEntity<HttpStatus> bookingTicket(@RequestBody BookingTicketDTO bookingTicketDTO) {
         ticketService.bookingTicket(bookingTicketDTO);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PostMapping("/pay/{passengerId}")
+    public ResponseEntity<HttpStatus> paymentTickets(@PathVariable Long passengerId, @RequestBody CardInfo cardInfo) throws InsufficientFunds {
+        ticketService.payment(passengerId, cardInfo);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
