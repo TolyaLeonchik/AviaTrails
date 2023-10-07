@@ -3,6 +3,8 @@ package com.site.aviatrails.controller;
 import com.site.aviatrails.domain.Flight;
 import com.site.aviatrails.domain.FlightInfo;
 import com.site.aviatrails.service.FlightService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,8 +45,8 @@ public class FlightController {
 
     @GetMapping("/search")
     public ResponseEntity<List<FlightInfo>> getFlightByParameters(@RequestParam("cityOfDeparture") String cityOfDeparture,
-                                                            @RequestParam("cityOfArrival") String cityOfArrival,
-                                                            @RequestParam("date") @DateTimeFormat(pattern="yyyy-MM-dd")
+                                                                  @RequestParam("cityOfArrival") String cityOfArrival,
+                                                                  @RequestParam("date") @DateTimeFormat(pattern="yyyy-MM-dd")
                                                                       LocalDate date) {
         List<FlightInfo> flightInfoSearch = flightService.findByParameters(cityOfDeparture, cityOfArrival, date);
         if (flightInfoSearch.isEmpty()) {

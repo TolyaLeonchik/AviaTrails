@@ -1,6 +1,7 @@
 package com.site.aviatrails.service;
 
 import com.site.aviatrails.domain.*;
+import com.site.aviatrails.exception.FlightNotFoundException;
 import com.site.aviatrails.repository.AirlinesRepository;
 import com.site.aviatrails.repository.AirportsRepository;
 import com.site.aviatrails.repository.FlightRepository;
@@ -8,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,12 +32,13 @@ public class FlightService {
     }
 
     public FlightInfo findById(Long id) {
-        FlightInfo flightInfo = new FlightInfo();
         Optional<Flight> flightById = flightRepository.findById(id);
 
         if (flightById.isEmpty()) {
-            return null; //TODO: EXCEPTION!!!
+            throw new FlightNotFoundException();
         }
+
+        FlightInfo flightInfo = new FlightInfo();
 
         Optional<Airline> airline = airlinesRepository.findById(flightById.get().getAirlineId());
         Optional<Airport> airportFrom = airportsRepository.findById(flightById.get().getFromAirportId());
@@ -65,35 +66,17 @@ public class FlightService {
     }
 
     public List<FlightInfo> findByParameters(String cityOfDeparture, String cityOfArrival, LocalDate date) {
-        List<Long> airportsOfDeparture = airportsRepository.findIdByPortCity(cityOfDeparture);
-        List<Long> airportsOfArrival = airportsRepository.findIdByPortCity(cityOfArrival);
-        List<Long> searchDeparture = new ArrayList<>();
-        List<Long> searchArrival = new ArrayList<>();
+        List<Long> airportsOfDeparture = airportsRepository.findIdsByPortCity(cityOfDeparture);
+        List<Long> airportsOfArrival = airportsRepository.findIdsByPortCity(cityOfArrival);
+        List<Long> flightSearchByParameters = flightRepository.findIdsByCityFromAndCityToAndLocalDate(airportsOfDeparture, airportsOfArrival, date);
+
+        if (flightSearchByParameters.isEmpty()) {
+            throw new FlightNotFoundException();
+        }
+
         List<FlightInfo> flightSearchResult = new ArrayList<>();
 
-        List<Long> flightAll = flightRepository.findIdsByDate(date);
-
-        for (Long flightId : flightAll) {
-            Optional<Flight> flightSearch = flightRepository.findById(flightId);
-            for (Long departure : airportsOfDeparture) {
-                if (flightSearch.isPresent() && flightSearch.get().getFromAirportId().equals(departure)) {
-                    Long searchIdDeparture = flightSearch.get().getId();
-                    searchDeparture.add(searchIdDeparture);
-                }
-            }
-        }
-
-        for (Long flightId : searchDeparture) {
-            Optional<Flight> flightSearch = flightRepository.findById(flightId);
-            for (Long arrival : airportsOfArrival) {
-                if (flightSearch.isPresent() && flightSearch.get().getToAirportId().equals(arrival)) {
-                    Long searchIdDeparture = flightSearch.get().getId();
-                    searchArrival.add(searchIdDeparture);
-                }
-            }
-        }
-
-        for (Long flightId : searchArrival) {
+        for (Long flightId : flightSearchByParameters) {
             FlightInfo flightInfo = findById(flightId);
             flightSearchResult.add(flightInfo);
         }

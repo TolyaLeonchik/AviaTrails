@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -14,11 +13,9 @@ public interface AirportsRepository extends JpaRepository<Airport, Long> {
     Long findIdByPortNameAndPortCity(String portName, String portCity);
 
     @Query("select a.id FROM airports a where a.portCity=:portCity")
-    List<Long> findIdByPortCity(String portCity);
+    List<Long> findIdsByPortCity(String portCity);
 
     @Query("select a.portName from airports a WHERE a.id=:id")
     String findPortNameById(long id);
 
-    @Query("select a.portCity from airports a WHERE a.id=:id")
-    String findPortCityById(long id);
 }

@@ -1,6 +1,9 @@
 package com.site.aviatrails.repository;
 
 import com.site.aviatrails.domain.Flight;
+import com.site.aviatrails.domain.FlightInfo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,14 +37,7 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
 
     @Query("select a.airlineId FROM flight_table a WHERE a.id=:flightId")
     Long findAirlineById(long flightId);
-        // нужные
 
-    @Query("select id from flight_table")
-    List<Long> findAllIds();
-
-    @Query("select a.id from flight_table a where DATE(a.departureTime)=:departureDate")
-    List<Long> findIdsByDate(LocalDate departureDate);
-
-    @Query("select a.id from flight_table a where a.fromAirportId=:from AND a.toAirportId=:to AND DATE(a.departureTime)=:departureDate")
+    @Query("select a.id from flight_table a where a.fromAirportId in :from AND a.toAirportId in :to AND DATE(a.departureTime)=:departureDate")
     List<Long> findIdsByCityFromAndCityToAndLocalDate(List<Long> from, List<Long> to, LocalDate departureDate);
 }
