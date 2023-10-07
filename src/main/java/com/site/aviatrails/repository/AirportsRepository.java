@@ -9,6 +9,7 @@ import java.util.List;
 
 @Repository
 public interface AirportsRepository extends JpaRepository<Airport, Long> {
+
     @Query("select a.id FROM airports a where a.portName=:portName and a.portCity=:portCity")
     Long findIdByPortNameAndPortCity(String portName, String portCity);
 

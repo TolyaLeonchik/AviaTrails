@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface PaymentHistoryRepository extends JpaRepository<PaymentDTO, Long> {
+
     Optional<PaymentDTO> findByTicketId(Long id);
 
     boolean existsByTicketId(Long id);

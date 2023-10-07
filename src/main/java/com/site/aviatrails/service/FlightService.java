@@ -1,6 +1,10 @@
 package com.site.aviatrails.service;
 
-import com.site.aviatrails.domain.*;
+
+import com.site.aviatrails.domain.Airline;
+import com.site.aviatrails.domain.Airport;
+import com.site.aviatrails.domain.Flight;
+import com.site.aviatrails.domain.FlightInfo;
 import com.site.aviatrails.exception.FlightNotFoundException;
 import com.site.aviatrails.repository.AirlinesRepository;
 import com.site.aviatrails.repository.AirportsRepository;

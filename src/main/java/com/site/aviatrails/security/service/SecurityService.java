@@ -8,13 +8,9 @@ import com.site.aviatrails.security.domain.AuthRequest;
 import com.site.aviatrails.security.domain.RegistrationDTO;
 import com.site.aviatrails.security.domain.SecurityCredentials;
 import com.site.aviatrails.security.repository.SecurityCredentialsRepository;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.Optional;
 

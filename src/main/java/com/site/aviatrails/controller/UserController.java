@@ -2,13 +2,11 @@ package com.site.aviatrails.controller;
 
 import com.site.aviatrails.domain.UserInfo;
 import com.site.aviatrails.exception.UserNotFoundException;
-import com.site.aviatrails.security.domain.SecurityCredentials;
 import com.site.aviatrails.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("user")
@@ -49,9 +46,13 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<HttpStatus> createUser(@RequestBody UserInfo userInfo) {
-        userService.createUser(userInfo);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    public ResponseEntity<HttpStatus> createUser(@Valid @RequestBody UserInfo userInfo, BindingResult bindingResult) {
+        if (!bindingResult.hasErrors()) {
+            userService.createUser(userInfo);
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
     }
 
     @PutMapping

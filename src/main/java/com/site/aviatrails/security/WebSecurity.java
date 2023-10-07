@@ -1,8 +1,6 @@
 package com.site.aviatrails.security;
 
 import com.site.aviatrails.domain.Role;
-import com.site.aviatrails.domain.UserInfo;
-import com.site.aviatrails.repository.UserRepository;
 import com.site.aviatrails.security.domain.SecurityCredentials;
 import com.site.aviatrails.security.repository.SecurityCredentialsRepository;
 import jakarta.servlet.http.HttpServletRequest;

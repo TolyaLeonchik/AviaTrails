@@ -1,6 +1,4 @@
 package com.site.aviatrails.service;
-//TODO:Все звёзды переделать
-
 
 import com.site.aviatrails.domain.CardInfo;
 import com.site.aviatrails.domain.Flight;
@@ -56,8 +54,6 @@ public class TicketService {
         return ticketRepository.findAll();
     }
 
-    //TODO: нужно ли админам полная как в этом методе информация об всех забронированных билетах?
-    //TODO: нужно ли тоже сделать поиски через Optional?
     public List<UserTicketInfo> getUserTicketsInfo(Long id) {
         BookingValidator bookingValidator = new BookingValidator();
         bookingValidator.validateTicketExistenceByPassengerId(ticketRepository.findIdsByPassengerId(id));
@@ -71,7 +67,7 @@ public class TicketService {
             UserTicketInfo userTicketInfo = new UserTicketInfo();
             Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
             Optional<Flight> flight = Optional.empty();
-            //TODO: как лучше сделать проверку
+
             if (ticketOptional.isPresent()) {
                 flight = flightRepository.findById(ticketOptional.get().getFlightId());
             }
@@ -86,7 +82,6 @@ public class TicketService {
                 userTicketInfo.setLastName(userInfo.get().getLastName());
                 userTicketInfo.setAirlineName(airlinesRepository.findAirlineNameById(airlineId));
 
-                //TODO: обраный билет + багаж (булеан + к цене за билет
                 userTicketInfo.setPortCityFrom(airportsRepository.findPortNameById(fromId));
                 userTicketInfo.setPortCityTo(airportsRepository.findPortNameById(toId));
 

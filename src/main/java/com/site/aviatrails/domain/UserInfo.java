@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.stereotype.Component;
 
@@ -25,10 +27,10 @@ public class UserInfo {
     private String lastName;
 
     @Column(name = "email")
+    @Email
     private String email;
 
     @Column(name = "phone_number")
+    @Size(min = 12, max = 16)
     private String phoneNumber;
-
-    //TODO: подумать про взрослые/дети билеты
 }

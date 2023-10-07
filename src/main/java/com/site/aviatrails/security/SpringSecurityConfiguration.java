@@ -1,13 +1,8 @@
 package com.site.aviatrails.security;
 
-import com.site.aviatrails.domain.Role;
-import com.site.aviatrails.domain.UserInfo;
-import com.site.aviatrails.repository.UserRepository;
-import com.site.aviatrails.security.domain.SecurityCredentials;
 import com.site.aviatrails.security.filter.JwtAuthenticationFilter;
-import com.site.aviatrails.security.repository.SecurityCredentialsRepository;
-import com.site.aviatrails.security.service.SecurityService;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,10 +14,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.bind.annotation.PathVariable;
 
+
+@SecurityScheme(
+        name = "Bearer Authentication",
+        type = SecuritySchemeType.HTTP,
+        bearerFormat = "JWT",
+        scheme = "bearer"
+)
 @Configuration
 public class SpringSecurityConfiguration {
 
