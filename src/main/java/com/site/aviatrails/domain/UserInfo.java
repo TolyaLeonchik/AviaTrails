@@ -31,6 +31,6 @@ public class UserInfo {
     private String email;
 
     @Column(name = "phone_number")
-    @Size(min = 12, max = 16)
+    @Size(min = 12, max = 15)
     private String phoneNumber;
 }

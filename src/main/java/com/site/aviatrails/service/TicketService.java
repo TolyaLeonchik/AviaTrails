@@ -229,13 +229,15 @@ public class TicketService {
     public void refundTicket(Long id) {
         BookingValidator bookingValidator = new BookingValidator();
         bookingValidator.validateTicketExistence(ticketRepository.existsById(id));
-        bookingValidator.validatePaymentExistence(paymentHistoryRepository.existsByTicketId(id));
 
         Optional<Ticket> ticket = ticketRepository.findById(id);
-        Optional<PaymentDTO> paymentDTO = paymentHistoryRepository.findByTicketId(id);
+
+        if (paymentHistoryRepository.existsByTicketId(id)) {
+            Optional<PaymentDTO> paymentDTO = paymentHistoryRepository.findByTicketId(id);
+            refundPayment(ticket, paymentDTO);
+        }
 
         flightRefund(ticket);
-        refundPayment(ticket, paymentDTO);
         ticketRepository.delete(ticket.get());
     }
 

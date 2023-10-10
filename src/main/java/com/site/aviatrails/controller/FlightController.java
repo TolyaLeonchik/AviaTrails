@@ -3,16 +3,23 @@ package com.site.aviatrails.controller;
 import com.site.aviatrails.domain.Flight;
 import com.site.aviatrails.domain.FlightInfo;
 import com.site.aviatrails.service.FlightService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/flights")
+@SecurityRequirement(name = "Bearer Authentication")
 public class FlightController {
 
     private final FlightService flightService;

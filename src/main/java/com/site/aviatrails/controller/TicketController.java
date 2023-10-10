@@ -6,6 +6,7 @@ import com.site.aviatrails.domain.tickets.Ticket;
 import com.site.aviatrails.domain.tickets.UserTicketInfo;
 import com.site.aviatrails.exception.InsufficientFunds;
 import com.site.aviatrails.service.TicketService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,6 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/booking")
+@SecurityRequirement(name = "Bearer Authentication")
 public class TicketController {
 
     private final TicketService ticketService;

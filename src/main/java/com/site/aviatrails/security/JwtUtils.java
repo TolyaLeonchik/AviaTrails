@@ -63,9 +63,4 @@ public class JwtUtils {
         }
         return null;
     }
-
-//    public boolean canView(HttpMethod auth, String request) {
-//        Authentication authentication;
-//        request = authentication.getName();
-//    }
 }

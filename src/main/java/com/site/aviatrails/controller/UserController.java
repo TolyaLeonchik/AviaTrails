@@ -3,6 +3,7 @@ package com.site.aviatrails.controller;
 import com.site.aviatrails.domain.UserInfo;
 import com.site.aviatrails.exception.UserNotFoundException;
 import com.site.aviatrails.service.UserService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("user")
+@SecurityRequirement(name = "Bearer Authentication")
 public class UserController {
 
     private final UserService userService;

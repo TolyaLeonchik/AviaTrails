@@ -2,6 +2,7 @@ package com.site.aviatrails.service;
 
 import com.site.aviatrails.domain.UserInfo;
 import com.site.aviatrails.repository.UserRepository;
+import com.site.aviatrails.validator.PhoneNumberValidator;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class UserService {
     }
 
     public void createUser(UserInfo userInfo) {
+        PhoneNumberValidator.validate(userInfo.getPhoneNumber());
         userRepository.save(userInfo);
     }
 

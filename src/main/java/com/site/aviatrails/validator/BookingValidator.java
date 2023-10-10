@@ -1,11 +1,12 @@
 package com.site.aviatrails.validator;
 
-import com.site.aviatrails.domain.PaymentDTO;
-import com.site.aviatrails.domain.tickets.Ticket;
-import com.site.aviatrails.exception.*;
+import com.site.aviatrails.exception.FlightNotFoundException;
+import com.site.aviatrails.exception.NoAvailableSeatsException;
+import com.site.aviatrails.exception.NoTicketsFoundException;
+import com.site.aviatrails.exception.PaymentNotFoundException;
+import com.site.aviatrails.exception.UserNotFoundException;
 
 import java.util.List;
-import java.util.Optional;
 
 public class BookingValidator {
 

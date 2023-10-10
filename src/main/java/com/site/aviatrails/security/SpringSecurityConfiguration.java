@@ -1,6 +1,7 @@
 package com.site.aviatrails.security;
 
 import com.site.aviatrails.security.filter.JwtAuthenticationFilter;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +22,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
         name = "Bearer Authentication",
         type = SecuritySchemeType.HTTP,
         bearerFormat = "JWT",
-        scheme = "bearer"
+        scheme = "bearer",
+        in = SecuritySchemeIn.HEADER
 )
 @Configuration
 public class SpringSecurityConfiguration {
@@ -56,18 +58,18 @@ public class SpringSecurityConfiguration {
                                         new AuthorizationDecision(webSecurity.canAccessUser(authentication.get(), context.getRequest()))))
                                 .requestMatchers(HttpMethod.POST, "/user").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/user").hasAnyRole("ADMIN", "USER", "MODERATOR")
-                                .requestMatchers(HttpMethod.DELETE, "/user/delete/{id}").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/flights").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/flights/{id}").permitAll()
+                                .requestMatchers(HttpMethod.DELETE, "/user/delete/{userId}").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/flights").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/flights/{flightId}").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/flights/search").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/booking/allTickets").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/booking/user/{id}")
+                                .requestMatchers(HttpMethod.GET, "/booking/user/{userId}")
                                 .access(((authentication, context) ->
                                         new AuthorizationDecision(webSecurity.canAccessUser(authentication.get(), context.getRequest()))))
                                 .requestMatchers(HttpMethod.POST, "/booking").hasAnyRole("ADMIN", "USER", "MODERATOR")
-                                .requestMatchers(HttpMethod.POST, "/booking/pay/{id}").hasAnyRole("ADMIN", "USER", "MODERATOR")
-                                .requestMatchers(HttpMethod.POST, "/booking/refund/{id}").access(((authentication, context) ->
-                                        new AuthorizationDecision(webSecurity.canAccessUser(authentication.get(), context.getRequest()))))
+                                .requestMatchers(HttpMethod.POST, "/booking/pay/{userId}").hasAnyRole("ADMIN", "USER", "MODERATOR")
+                                .requestMatchers(HttpMethod.DELETE, "/booking/refund/{ticketId}").access(((authentication, context) ->
+                                        new AuthorizationDecision(webSecurity.canAccessToDelete(authentication.get(), context.getRequest()))))
                                 .requestMatchers(HttpMethod.POST, "/authentication").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/registration").permitAll()
                                 .anyRequest().authenticated())
