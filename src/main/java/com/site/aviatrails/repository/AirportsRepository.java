@@ -15,8 +15,4 @@ public interface AirportsRepository extends JpaRepository<Airport, Long> {
 
     @Query("select a.id FROM airports a where a.portCity=:portCity")
     List<Long> findIdsByPortCity(String portCity);
-
-    @Query("select a.portName from airports a WHERE a.id=:id")
-    String findPortNameById(long id);
-
 }

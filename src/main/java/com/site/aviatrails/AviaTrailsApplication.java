@@ -25,10 +25,10 @@ public class AviaTrailsApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(AviaTrailsApplication.class, args);
-
-        log.error("ERROR LOG!!!");
+//
+//        log.error("ERROR LOG!!!");
         log.info("INFO LOG");
-        log.debug("DEBUG LOG");
+//        log.debug("DEBUG LOG");
     }
 
 }

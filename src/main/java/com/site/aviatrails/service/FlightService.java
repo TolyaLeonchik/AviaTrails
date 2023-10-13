@@ -1,6 +1,5 @@
 package com.site.aviatrails.service;
 
-
 import com.site.aviatrails.domain.Airline;
 import com.site.aviatrails.domain.Airport;
 import com.site.aviatrails.domain.Flight;
@@ -23,13 +22,11 @@ public class FlightService {
     private final AirlinesRepository airlinesRepository;
     private final AirportsRepository airportsRepository;
 
-
     public FlightService(FlightRepository flightRepository, AirlinesRepository airlinesRepository, AirportsRepository airportsRepository) {
         this.flightRepository = flightRepository;
         this.airlinesRepository = airlinesRepository;
         this.airportsRepository = airportsRepository;
     }
-
 
     public List<Flight> getAllFlights() {
         return flightRepository.findAll();

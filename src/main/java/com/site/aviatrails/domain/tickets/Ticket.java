@@ -32,4 +32,7 @@ public class Ticket {
 
     @Column(name = "ticket_price")
     private Integer ticketPrice;
+
+    @Column(name = "active_status")
+    private Boolean activeStatus;
 }

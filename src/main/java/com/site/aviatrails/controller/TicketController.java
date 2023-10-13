@@ -5,10 +5,12 @@ import com.site.aviatrails.domain.tickets.BookingTicketDTO;
 import com.site.aviatrails.domain.tickets.Ticket;
 import com.site.aviatrails.domain.tickets.UserTicketInfo;
 import com.site.aviatrails.exception.InsufficientFunds;
+import com.site.aviatrails.security.WebSecurity;
 import com.site.aviatrails.service.TicketService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,9 +27,11 @@ import java.util.List;
 public class TicketController {
 
     private final TicketService ticketService;
+    private final WebSecurity webSecurity;
 
-    public TicketController(TicketService ticketService) {
+    public TicketController(TicketService ticketService, WebSecurity webSecurity) {
         this.ticketService = ticketService;
+        this.webSecurity = webSecurity;
     }
 
     @GetMapping("/allTickets")
@@ -41,8 +45,19 @@ public class TicketController {
     }
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<UserTicketInfo>> getUsersTickets(@PathVariable Long id) {
-        List<UserTicketInfo> tickets = ticketService.getUserTicketsInfo(id);
+    public ResponseEntity<List<UserTicketInfo>> getUsersTicketsById(@PathVariable Long id) {
+        List<UserTicketInfo> tickets = ticketService.getUserTicketsInfoById(id);
+        if (tickets.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>(tickets, HttpStatus.OK);
+        }
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<List<UserTicketInfo>> getUsersTickets() {
+        Long currentId = webSecurity.currentUserid(SecurityContextHolder.getContext().getAuthentication());
+        List<UserTicketInfo> tickets = ticketService.getUserTicketsInfoById(currentId);
         if (tickets.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else {
@@ -56,9 +71,10 @@ public class TicketController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PostMapping("/pay/{passengerId}")
-    public ResponseEntity<HttpStatus> paymentTickets(@PathVariable Long passengerId, @RequestBody CardInfo cardInfo) throws InsufficientFunds {
-        ticketService.payment(passengerId, cardInfo);
+    @PostMapping("/pay")
+    public ResponseEntity<HttpStatus> paymentTickets(@RequestBody CardInfo cardInfo) throws InsufficientFunds {
+        Long currentUserid = webSecurity.currentUserid(SecurityContextHolder.getContext().getAuthentication());
+        ticketService.payment(currentUserid, cardInfo);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

@@ -16,6 +16,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT t.id FROM ticket_table t WHERE t.passengerId=:id")
     List<Long> findIdsByPassengerId(Long id);
 
-    @Query("SELECT t.flightId FROM ticket_table t WHERE t.id=:ticketId")
-    Long findFlightIdById(Long ticketId);
+    @Query("SELECT t, f, y, p, q from ticket_table t " +
+            "JOIN flight_table f ON t.flightId = f.id " +
+            "JOIN airlines y ON f.airlineId = y.id " +
+            "JOIN airports p ON f.fromAirportId = p.id " +
+            "JOIN airports q ON f.toAirportId = q.id WHERE t.passengerId =:userId")
+    List<Object[]> getTicketWithDetails(Long userId);
 }

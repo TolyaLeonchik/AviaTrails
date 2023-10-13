@@ -14,8 +14,8 @@ public class BookingTicketDTO {
     private String portNameFrom;
     private String portNameTo;
     private LocalDateTime departureTime;
-    private int countOfTickets;
-    private boolean returnTicket;
+    private Integer countOfTickets;
+    private Boolean returnTicket;
 
     private String returnAirline;
     private String returnPortCityFrom;
@@ -23,5 +23,5 @@ public class BookingTicketDTO {
     private String returnPortNameFrom;
     private String returnPortNameTo;
     private LocalDateTime returnDepartureTime;
-    private int returnCountOfTickets;
+    private Integer returnCountOfTickets;
 }

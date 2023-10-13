@@ -5,11 +5,12 @@ import com.site.aviatrails.exception.NoAvailableSeatsException;
 import com.site.aviatrails.exception.NoTicketsFoundException;
 import com.site.aviatrails.exception.PaymentNotFoundException;
 import com.site.aviatrails.exception.UserNotFoundException;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public class BookingValidator {
-
 
     public void validateFlightExistence(Long flightId) {
         if (flightId == null) {

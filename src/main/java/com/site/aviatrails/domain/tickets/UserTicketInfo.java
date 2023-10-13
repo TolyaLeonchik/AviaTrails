@@ -1,9 +1,11 @@
 package com.site.aviatrails.domain.tickets;
 
 import lombok.Data;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+@Component
 @Data
 public class UserTicketInfo {
     private String firstName;
@@ -16,4 +18,5 @@ public class UserTicketInfo {
     private Integer numberOfTickets;
     private Integer seatNumber;
     private Integer ticketPrice;
+    private Boolean activeStatus;
 }

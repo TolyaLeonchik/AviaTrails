@@ -1,5 +1,7 @@
 package com.site.aviatrails.service;
 
+import com.site.aviatrails.domain.Airline;
+import com.site.aviatrails.domain.Airport;
 import com.site.aviatrails.domain.CardInfo;
 import com.site.aviatrails.domain.Flight;
 import com.site.aviatrails.domain.PaymentDTO;
@@ -13,7 +15,6 @@ import com.site.aviatrails.exception.InsufficientFunds;
 import com.site.aviatrails.exception.NoTicketsFoundException;
 import com.site.aviatrails.exception.TicketAlreadyPaidException;
 
-import com.site.aviatrails.repository.AirlinesRepository;
 import com.site.aviatrails.repository.AirportsRepository;
 import com.site.aviatrails.repository.FlightRepository;
 import com.site.aviatrails.repository.PaymentHistoryRepository;
@@ -32,67 +33,63 @@ public class TicketService {
 
     private final TicketRepository ticketRepository;
     private final AirportsRepository airportsRepository;
-    private final AirlinesRepository airlinesRepository;
     private final FlightRepository flightRepository;
     private final UserRepository userRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
+    private final BookingValidator bookingValidator;
+    private final CardInfo cardInfo;
 
     private static final long BOOKING_TIME_LIMIT_MS = 15 * 60 * 1000;
 
     public TicketService(TicketRepository ticketRepository, AirportsRepository airportsRepository,
-                         AirlinesRepository airlinesRepository, FlightRepository flightRepository,
-                         UserRepository userRepository, PaymentHistoryRepository paymentHistoryRepository) {
+                         FlightRepository flightRepository, UserRepository userRepository, CardInfo cardInfo,
+                         PaymentHistoryRepository paymentHistoryRepository, BookingValidator bookingValidator) {
         this.ticketRepository = ticketRepository;
         this.airportsRepository = airportsRepository;
-        this.airlinesRepository = airlinesRepository;
         this.flightRepository = flightRepository;
         this.userRepository = userRepository;
         this.paymentHistoryRepository = paymentHistoryRepository;
+        this.bookingValidator = bookingValidator;
+        this.cardInfo = cardInfo;
     }
 
     public List<Ticket> getAllTickets() {
         return ticketRepository.findAll();
     }
 
-    public List<UserTicketInfo> getUserTicketsInfo(Long id) {
-        BookingValidator bookingValidator = new BookingValidator();
+    public List<UserTicketInfo> getUserTicketsInfoById(Long id) {
+
         bookingValidator.validateTicketExistenceByPassengerId(ticketRepository.findIdsByPassengerId(id));
         bookingValidator.validateUserExistence(id);
 
-        List<Long> ticketsIds = ticketRepository.findIdsByPassengerId(id);
         List<UserTicketInfo> userTicketsInfo = new ArrayList<>();
         Optional<UserInfo> userInfo = userRepository.findById(id);
+        List<Object[]> ticketWithDetails = ticketRepository.getTicketWithDetails(id);
 
-        for (Long ticketId : ticketsIds) {
+        for (Object[] ticketFromDb : ticketWithDetails) {
             UserTicketInfo userTicketInfo = new UserTicketInfo();
-            Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-            Optional<Flight> flight = Optional.empty();
 
-            if (ticketOptional.isPresent()) {
-                flight = flightRepository.findById(ticketOptional.get().getFlightId());
-            }
+            Ticket ticketDb = (Ticket) ticketFromDb[0];
+            Flight flightDb = (Flight) ticketFromDb[1];
+            Airline airlineDb = (Airline) ticketFromDb[2];
+            Airport airportFrom = (Airport) ticketFromDb[3];
+            Airport airportTo = (Airport) ticketFromDb[4];
 
-            long flightId = ticketRepository.findFlightIdById(ticketId);
-            long airlineId = flightRepository.findAirlineById(flightId);
-            long fromId = flightRepository.findFromAirportIdById(flightId);
-            long toId = flightRepository.findToAirportIdById(flightId);
+            userTicketInfo.setFirstName(userInfo.get().getFirstName());
+            userTicketInfo.setLastName(userInfo.get().getLastName());
+            userTicketInfo.setAirlineName(airlineDb.getAirlineName());
 
-            if (userInfo.isPresent() && flight.isPresent()) {
-                userTicketInfo.setFirstName(userInfo.get().getFirstName());
-                userTicketInfo.setLastName(userInfo.get().getLastName());
-                userTicketInfo.setAirlineName(airlinesRepository.findAirlineNameById(airlineId));
+            userTicketInfo.setPortCityFrom(airportFrom.getPortCity());
+            userTicketInfo.setPortCityTo(airportTo.getPortCity());
 
-                userTicketInfo.setPortCityFrom(airportsRepository.findPortNameById(fromId));
-                userTicketInfo.setPortCityTo(airportsRepository.findPortNameById(toId));
+            userTicketInfo.setDepartureTime(flightDb.getDepartureTime());
+            userTicketInfo.setArrivalTime(flightDb.getArrivalTime());
+            userTicketInfo.setNumberOfTickets(ticketDb.getNumberOfTickets());
+            userTicketInfo.setSeatNumber(ticketDb.getSeatNumber());
+            userTicketInfo.setTicketPrice(ticketDb.getTicketPrice());
+            userTicketInfo.setActiveStatus(ticketDb.getActiveStatus());
 
-                userTicketInfo.setDepartureTime(flight.get().getDepartureTime());
-                userTicketInfo.setArrivalTime(flight.get().getArrivalTime());
-                userTicketInfo.setNumberOfTickets(ticketOptional.get().getNumberOfTickets());
-                userTicketInfo.setSeatNumber(ticketOptional.get().getSeatNumber());
-                userTicketInfo.setTicketPrice(ticketOptional.get().getTicketPrice());
-
-                userTicketsInfo.add(userTicketInfo);
-            }
+            userTicketsInfo.add(userTicketInfo);
         }
         return userTicketsInfo;
     }
@@ -109,13 +106,12 @@ public class TicketService {
                         bookingTicketDTO.getDepartureTime());
         Long flightReturningId = null;
 
-        BookingValidator bookingValidator = new BookingValidator();
         bookingValidator.validateFlightExistence(flightId);
         bookingValidator.validateUserExistence(userRepository
                 .findIdByFirstNameAndLastName(bookingTicketDTO.getFirstName(), bookingTicketDTO.getLastName()));
         bookingValidator.validateSeatAvailability(flightRepository.findNumberOfFreeSeatsById(flightId), bookingTicketDTO.getCountOfTickets());
 
-        if (bookingTicketDTO.isReturnTicket()) {
+        if (bookingTicketDTO.getReturnTicket()) {
             flightReturningId = flightRepository.
                     findIdByParameters(airportsRepository.
                                     findIdByPortNameAndPortCity(bookingTicketDTO.getReturnPortNameFrom(), bookingTicketDTO.getReturnPortCityFrom()),
@@ -126,7 +122,7 @@ public class TicketService {
         }
 
         Ticket ticket = new Ticket();
-        Ticket returningTicket = bookingTicketDTO.isReturnTicket() ? new Ticket() : null;
+        Ticket returningTicket = bookingTicketDTO.getReturnTicket() ? new Ticket() : null;
 
         ticketFactory(ticket, returningTicket, flightId, flightReturningId, bookingTicketDTO);
 
@@ -136,7 +132,7 @@ public class TicketService {
 
         ticketRepository.save(ticket);
 
-        if (bookingTicketDTO.isReturnTicket() && returningTicket != null) {
+        if (bookingTicketDTO.getReturnTicket() && returningTicket != null) {
             ticketRepository.save(returningTicket);
         }
     }
@@ -148,13 +144,13 @@ public class TicketService {
         ticket.setTicketPrice(flightRepository.findFlightPriceById(flightId) * bookingTicketDTO.getCountOfTickets());
         ticket.setSeatNumber(flightRepository.findNumberOfFreeSeatsById(flightId));
         ticket.setNumberOfTickets(bookingTicketDTO.getCountOfTickets());
+        ticket.setActiveStatus(false);
 
         flightRepository
                 .updateNumberOfFreeSeatsById(ticket.getSeatNumber() - bookingTicketDTO.getCountOfTickets(), flightId);
 
-        if (bookingTicketDTO.isReturnTicket()) {
+        if (bookingTicketDTO.getReturnTicket()) {
 
-            BookingValidator bookingValidator = new BookingValidator();
             bookingValidator.validateFlightExistence(flightReturningId);
             bookingValidator.validateSeatAvailability(flightRepository.findNumberOfFreeSeatsById(flightReturningId), bookingTicketDTO.getReturnCountOfTickets());
 
@@ -163,6 +159,7 @@ public class TicketService {
             returningTicket.setTicketPrice(flightRepository.findFlightPriceById(flightReturningId) * bookingTicketDTO.getReturnCountOfTickets());
             returningTicket.setSeatNumber(flightRepository.findNumberOfFreeSeatsById(flightReturningId));
             returningTicket.setNumberOfTickets(bookingTicketDTO.getReturnCountOfTickets());
+            returningTicket.setActiveStatus(false);
 
             flightRepository
                     .updateNumberOfFreeSeatsById(returningTicket.getSeatNumber() - bookingTicketDTO.getReturnCountOfTickets(), flightReturningId);
@@ -183,6 +180,8 @@ public class TicketService {
         for (Ticket ticket : unpaidTickets) {
             PaymentDTO paymentDTO = createPayment(ticket, cardInfo);
             paymentHistoryRepository.save(paymentDTO);
+            ticket.setActiveStatus(true);
+            ticketRepository.saveAndFlush(ticket);
         }
         cardInfo.setBalance(cardInfo.getBalance() - price);
     }
@@ -227,7 +226,6 @@ public class TicketService {
 
     @Transactional(rollbackFor = Exception.class)
     public void refundTicket(Long id) {
-        BookingValidator bookingValidator = new BookingValidator();
         bookingValidator.validateTicketExistence(ticketRepository.existsById(id));
 
         Optional<Ticket> ticket = ticketRepository.findById(id);
@@ -242,7 +240,6 @@ public class TicketService {
     }
 
     private void refundPayment(Optional<Ticket> ticket, Optional<PaymentDTO> paymentDTO) {
-        CardInfo cardInfo = new CardInfo();
         cardInfo.setNumberCard(paymentDTO.get().getCardNumber());
         cardInfo.setBalance(cardInfo.getBalance() + ticket.get().getTicketPrice());
     }

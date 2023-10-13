@@ -2,6 +2,7 @@ package com.site.aviatrails.security;
 
 import com.site.aviatrails.domain.Role;
 import com.site.aviatrails.domain.tickets.Ticket;
+import com.site.aviatrails.exception.UserNotFoundException;
 import com.site.aviatrails.repository.TicketRepository;
 import com.site.aviatrails.security.domain.SecurityCredentials;
 import com.site.aviatrails.security.repository.SecurityCredentialsRepository;
@@ -55,5 +56,13 @@ public class WebSecurity {
             return true;
         }
         return false;
+    }
+
+    public Long currentUserid(Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Optional<SecurityCredentials> securityCredentials = securityCredentialsRepository.findByUserLogin(userDetails.getUsername());
+        if (securityCredentials.isPresent()) {
+            return securityCredentials.get().getUserId();
+        } else throw new UserNotFoundException();
     }
 }

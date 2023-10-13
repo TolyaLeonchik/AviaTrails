@@ -17,7 +17,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-
 @SecurityScheme(
         name = "Bearer Authentication",
         type = SecuritySchemeType.HTTP,
@@ -58,16 +57,16 @@ public class SpringSecurityConfiguration {
                                         new AuthorizationDecision(webSecurity.canAccessUser(authentication.get(), context.getRequest()))))
                                 .requestMatchers(HttpMethod.POST, "/user").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/user").hasAnyRole("ADMIN", "USER", "MODERATOR")
-                                .requestMatchers(HttpMethod.DELETE, "/user/delete/{userId}").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/user/{userId}").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/flights").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/flights/{flightId}").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/flights/search").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/booking/allTickets").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/booking/user/{userId}")
-                                .access(((authentication, context) ->
-                                        new AuthorizationDecision(webSecurity.canAccessUser(authentication.get(), context.getRequest()))))
+                                .requestMatchers(HttpMethod.GET, "/booking/user").hasAnyRole("ADMIN", "USER", "MODERATOR")
+                                .requestMatchers(HttpMethod.GET, "/booking/user/{userId}").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.POST, "/booking").hasAnyRole("ADMIN", "USER", "MODERATOR")
-                                .requestMatchers(HttpMethod.POST, "/booking/pay/{userId}").hasAnyRole("ADMIN", "USER", "MODERATOR")
+                                .requestMatchers(HttpMethod.POST, "/booking").hasAnyRole("ADMIN", "USER", "MODERATOR")
+                                .requestMatchers(HttpMethod.POST, "/booking/pay").hasAnyRole("ADMIN", "USER", "MODERATOR")
                                 .requestMatchers(HttpMethod.DELETE, "/booking/refund/{ticketId}").access(((authentication, context) ->
                                         new AuthorizationDecision(webSecurity.canAccessToDelete(authentication.get(), context.getRequest()))))
                                 .requestMatchers(HttpMethod.POST, "/authentication").permitAll()

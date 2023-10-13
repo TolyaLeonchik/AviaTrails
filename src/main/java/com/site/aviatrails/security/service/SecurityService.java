@@ -34,7 +34,6 @@ public class SecurityService {
         this.userRepository = userRepository;
     }
 
-
     public String generateToken(AuthRequest authRequest) {
         Optional<SecurityCredentials> credentials = securityCredentialsRepository.findByUserLogin(authRequest.getLogin());
 

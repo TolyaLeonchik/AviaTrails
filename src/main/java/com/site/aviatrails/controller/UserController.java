@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("user")
+@RequestMapping("/user")
 @SecurityRequirement(name = "Bearer Authentication")
 public class UserController {
 
@@ -58,12 +58,12 @@ public class UserController {
     }
 
     @PutMapping
-    public ResponseEntity<HttpStatus> updateUser(@RequestBody UserInfo userInfo) {
+    public ResponseEntity<HttpStatus> updateUser(@RequestBody UserInfo userInfo) {// !!!!!!!!!!!!!!! validate
         userService.updateUser(userInfo);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")  // !!!!!!!!!!!!!!!
     public ResponseEntity<HttpStatus> deleteUser(@PathVariable Long id) {
         userService.deleteUserById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
