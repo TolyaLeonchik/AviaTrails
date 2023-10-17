@@ -69,6 +69,10 @@ public class SpringSecurityConfiguration {
                                 .requestMatchers(HttpMethod.POST, "/booking/pay").hasAnyRole("ADMIN", "USER", "MODERATOR")
                                 .requestMatchers(HttpMethod.DELETE, "/booking/refund/{ticketId}").access(((authentication, context) ->
                                         new AuthorizationDecision(webSecurity.canAccessToDelete(authentication.get(), context.getRequest()))))
+                                .requestMatchers(HttpMethod.GET, "/airport").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/airport/{airportId}").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/airport").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/airport/{airportId}").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.POST, "/authentication").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/registration").permitAll()
                                 .anyRequest().authenticated())

@@ -57,4 +57,10 @@ public class ExceptionResolver {
         log.info("UserNotFoundException! User not found!");
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(value = AirportNotFoundException.class)
+    public ResponseEntity<HttpStatus> AirportNotFoundException() {
+        log.info("AirportNotFoundException! Airport not found!");
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
 }

@@ -32,7 +32,6 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<UserInfo>> getUsers() {
-
         List<UserInfo> users = userService.getUsers();
         if (users.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -58,12 +57,16 @@ public class UserController {
     }
 
     @PutMapping
-    public ResponseEntity<HttpStatus> updateUser(@RequestBody UserInfo userInfo) {// !!!!!!!!!!!!!!! validate
-        userService.updateUser(userInfo);
+    public ResponseEntity<HttpStatus> updateUser(@Valid @RequestBody UserInfo userInfo, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } else {
+            userService.updateUser(userInfo);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @DeleteMapping("/{id}")  // !!!!!!!!!!!!!!!
+    @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteUser(@PathVariable Long id) {
         userService.deleteUserById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
