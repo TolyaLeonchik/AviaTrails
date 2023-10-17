@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.springframework.stereotype.Component;
 
@@ -19,11 +20,13 @@ public class Airline {
     private Long id;
 
     @Column(name = "airline_name")
+    @Pattern(regexp = "^[A-ZА-я].*")
     private String airlineName;
 
     @Column(name = "country")
+    @Pattern(regexp = "^[A-ZА-я].*")
     private String airlineCountry;
 
     @Column(name = "port_id")
-    private String airportId;
+    private Long airportId;
 }
