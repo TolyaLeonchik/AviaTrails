@@ -1,10 +1,12 @@
 package com.site.aviatrails.domain;
 
 import lombok.Data;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
 @Data
+@Component
 public class FlightInfo {
     private String airline;
     private String portCityFrom;

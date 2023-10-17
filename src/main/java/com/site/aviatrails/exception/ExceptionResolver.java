@@ -69,4 +69,10 @@ public class ExceptionResolver {
         log.info("AirlineNotFoundException! Airline not found!");
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(value = BadRequestException.class)
+    public ResponseEntity<HttpStatus> BadRequestException() {
+        log.info("BadRequestException! Bad request!");
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
 }

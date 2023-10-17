@@ -8,6 +8,7 @@ import com.site.aviatrails.exception.FlightNotFoundException;
 import com.site.aviatrails.repository.AirlinesRepository;
 import com.site.aviatrails.repository.AirportsRepository;
 import com.site.aviatrails.repository.FlightRepository;
+import com.site.aviatrails.validator.FlightValidator;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -21,25 +22,32 @@ public class FlightService {
     private final FlightRepository flightRepository;
     private final AirlinesRepository airlinesRepository;
     private final AirportsRepository airportsRepository;
+    private final FlightValidator flightValidator;
+    private final FlightInfo flightInfo;
 
-    public FlightService(FlightRepository flightRepository, AirlinesRepository airlinesRepository, AirportsRepository airportsRepository) {
+    public FlightService(FlightRepository flightRepository, AirlinesRepository airlinesRepository,
+                         AirportsRepository airportsRepository, FlightValidator flightValidator, FlightInfo flightInfo) {
         this.flightRepository = flightRepository;
         this.airlinesRepository = airlinesRepository;
         this.airportsRepository = airportsRepository;
+        this.flightValidator = flightValidator;
+        this.flightInfo = flightInfo;
     }
 
     public List<Flight> getAllFlights() {
         return flightRepository.findAll();
     }
 
-    public FlightInfo findById(Long id) {
+    public Optional<Flight> findById(Long id) {
+        return flightRepository.findById(id);
+    }
+
+    public FlightInfo findInfoById(Long id) {
         Optional<Flight> flightById = flightRepository.findById(id);
 
         if (flightById.isEmpty()) {
             throw new FlightNotFoundException();
         }
-
-        FlightInfo flightInfo = new FlightInfo();
 
         Optional<Airline> airline = airlinesRepository.findById(flightById.get().getAirlineId());
         Optional<Airport> airportFrom = airportsRepository.findById(flightById.get().getFromAirportId());
@@ -78,9 +86,23 @@ public class FlightService {
         List<FlightInfo> flightSearchResult = new ArrayList<>();
 
         for (Long flightId : flightSearchByParameters) {
-            FlightInfo flightInfo = findById(flightId);
+            FlightInfo flightInfo = findInfoById(flightId);
             flightSearchResult.add(flightInfo);
         }
         return flightSearchResult;
+    }
+
+    public void createFlight(Flight flight) {
+        flightValidator.validateFlight(flight);
+        flightRepository.save(flight);
+    }
+
+    public void updateFlight(Flight flight) {
+        flightValidator.validateFlight(flight);
+        flightRepository.saveAndFlush(flight);
+    }
+
+    public void deleteFlightById(Long id) {
+        flightRepository.deleteById(id);
     }
 }
