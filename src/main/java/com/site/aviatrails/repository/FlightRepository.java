@@ -27,6 +27,6 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
     @Query("UPDATE flight_table a SET a.numberOfFreeSeats=:updateNumber WHERE a.id=:id")
     Integer updateNumberOfFreeSeatsById(@Param("updateNumber") Integer updateNumber, @Param("id") Long id);
 
-    @Query("select a.id from flight_table a where a.fromAirportId in :from AND a.toAirportId in :to AND DATE(a.departureTime)=:departureDate")
-    List<Long> findIdsByCityFromAndCityToAndLocalDate(List<Long> from, List<Long> to, LocalDate departureDate);
+    @Query("select a from flight_table a where a.fromAirportId in :from AND a.toAirportId in :to AND DATE(a.departureTime)=:departureDate")
+    List<Flight> findByCityFromAndCityToAndLocalDate(List<Long> from, List<Long> to, LocalDate departureDate);
 }

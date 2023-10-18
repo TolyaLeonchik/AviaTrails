@@ -9,11 +9,17 @@ import com.site.aviatrails.repository.AirlinesRepository;
 import com.site.aviatrails.repository.AirportsRepository;
 import com.site.aviatrails.repository.FlightRepository;
 import com.site.aviatrails.validator.FlightValidator;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,15 +29,13 @@ public class FlightService {
     private final AirlinesRepository airlinesRepository;
     private final AirportsRepository airportsRepository;
     private final FlightValidator flightValidator;
-    private final FlightInfo flightInfo;
 
     public FlightService(FlightRepository flightRepository, AirlinesRepository airlinesRepository,
-                         AirportsRepository airportsRepository, FlightValidator flightValidator, FlightInfo flightInfo) {
+                         AirportsRepository airportsRepository, FlightValidator flightValidator) {
         this.flightRepository = flightRepository;
         this.airlinesRepository = airlinesRepository;
         this.airportsRepository = airportsRepository;
         this.flightValidator = flightValidator;
-        this.flightInfo = flightInfo;
     }
 
     public List<Flight> getAllFlights() {
@@ -48,48 +52,37 @@ public class FlightService {
         if (flightById.isEmpty()) {
             throw new FlightNotFoundException();
         }
-
-        Optional<Airline> airline = airlinesRepository.findById(flightById.get().getAirlineId());
-        Optional<Airport> airportFrom = airportsRepository.findById(flightById.get().getFromAirportId());
-        Optional<Airport> airportTo = airportsRepository.findById(flightById.get().getToAirportId());
-
-        if (airline.isPresent() && airportFrom.isPresent() && airportTo.isPresent()) {
-
-            flightInfo.setAirline(airline.get().getAirlineName());
-            flightInfo.setPortCityFrom(airportFrom.get().getPortCity());
-            flightInfo.setPortCityTo(airportTo.get().getPortCity());
-            flightInfo.setPortNameFrom(airportFrom.get().getPortName());
-            flightInfo.setPortNameTo(airportTo.get().getPortName());
-            flightInfo.setAirportCodeFrom(airportFrom.get().getAirportCode());
-            flightInfo.setAirportCodeTo(airportTo.get().getAirportCode());
-            flightInfo.setDepartureTime(flightById.get().getDepartureTime());
-            flightInfo.setArrivalTime(flightById.get().getArrivalTime());
-            flightInfo.setFlightPrice(flightById.get().getFlightPrice());
-            flightInfo.setNumberOfFreeSeats(flightById.get().getNumberOfFreeSeats());
-
-            Duration duration = Duration.between(flightInfo.getDepartureTime(), flightInfo.getArrivalTime());
-            long seconds = duration.getSeconds();
-            flightInfo.setFlightDurationInHours(seconds / 3600.0);
-        }
-        return flightInfo;
+        return mapToDto(flightById.get());
     }
 
-    public List<FlightInfo> findByParameters(String cityOfDeparture, String cityOfArrival, LocalDate date) {
+    public Page<FlightInfo> findByParameters(Pageable pageable, String cityOfDeparture, String cityOfArrival, LocalDate date,
+                                             String direction, String property) {
         List<Long> airportsOfDeparture = airportsRepository.findIdsByPortCity(cityOfDeparture);
         List<Long> airportsOfArrival = airportsRepository.findIdsByPortCity(cityOfArrival);
-        List<Long> flightSearchByParameters = flightRepository.findIdsByCityFromAndCityToAndLocalDate(airportsOfDeparture, airportsOfArrival, date);
+        List<Flight> flightSearchByParameters = flightRepository.findByCityFromAndCityToAndLocalDate(airportsOfDeparture, airportsOfArrival, date);
 
         if (flightSearchByParameters.isEmpty()) {
             throw new FlightNotFoundException();
         }
-
-        List<FlightInfo> flightSearchResult = new ArrayList<>();
-
-        for (Long flightId : flightSearchByParameters) {
-            FlightInfo flightInfo = findInfoById(flightId);
-            flightSearchResult.add(flightInfo);
+        if (checkList(direction, property) && property.equals("flightPrice")) {
+            sortByPrice(flightSearchByParameters, direction);
+            Sort.Direction sortDirection = Sort.Direction.fromString(direction);
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(sortDirection, property));
+        } else {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.Direction.ASC, "id");
         }
-        return flightSearchResult;
+
+        Page<Flight> flights = new PageImpl<>(flightSearchByParameters, pageable, flightSearchByParameters.size());
+        return flights.map(this::mapToDto);
+    }
+
+    private List<Flight> sortByPrice(List<Flight> flights, String direction) {
+        flights.sort(Comparator.comparing(Flight::getFlightPrice));
+
+        if ("desc".equalsIgnoreCase(direction)) {
+            Collections.reverse(flights);
+        }
+        return flights;
     }
 
     public void createFlight(Flight flight) {
@@ -104,5 +97,49 @@ public class FlightService {
 
     public void deleteFlightById(Long id) {
         flightRepository.deleteById(id);
+    }
+
+    public Page<FlightInfo> getFlightsPagesBySort(Pageable pageable, String direction, String property) {
+        if (checkList(direction, property)) {
+            Sort.Direction sortDirection = Sort.Direction.fromString(direction);
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(sortDirection, property));
+        } else {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.Direction.ASC, "id");
+        }
+
+        Page<Flight> flights = flightRepository.findAll(pageable);
+        return flights.map(this::mapToDto);
+    }
+
+    private boolean checkList(String direction, String property) {
+        return direction != null && !direction.isEmpty() && (direction.equals("desc") || direction.equals("asc"))
+                && property != null && !property.isEmpty();
+    }
+
+    private FlightInfo mapToDto(Flight flightById) {
+        Optional<Airline> airline = airlinesRepository.findById(flightById.getAirlineId());
+        Optional<Airport> airportFrom = airportsRepository.findById(flightById.getFromAirportId());
+        Optional<Airport> airportTo = airportsRepository.findById(flightById.getToAirportId());
+
+        FlightInfo flightInfo = new FlightInfo();
+        if (airline.isPresent() && airportFrom.isPresent() && airportTo.isPresent()) {
+
+            flightInfo.setAirline(airline.get().getAirlineName());
+            flightInfo.setPortCityFrom(airportFrom.get().getPortCity());
+            flightInfo.setPortCityTo(airportTo.get().getPortCity());
+            flightInfo.setPortNameFrom(airportFrom.get().getPortName());
+            flightInfo.setPortNameTo(airportTo.get().getPortName());
+            flightInfo.setAirportCodeFrom(airportFrom.get().getAirportCode());
+            flightInfo.setAirportCodeTo(airportTo.get().getAirportCode());
+            flightInfo.setDepartureTime(flightById.getDepartureTime());
+            flightInfo.setArrivalTime(flightById.getArrivalTime());
+            flightInfo.setFlightPrice(flightById.getFlightPrice());
+            flightInfo.setNumberOfFreeSeats(flightById.getNumberOfFreeSeats());
+
+            Duration duration = Duration.between(flightInfo.getDepartureTime(), flightInfo.getArrivalTime());
+            long seconds = duration.getSeconds();
+            flightInfo.setFlightDurationInHours(seconds / 3600.0);
+        }
+        return flightInfo;
     }
 }

@@ -6,6 +6,10 @@ import com.site.aviatrails.exception.FlightNotFoundException;
 import com.site.aviatrails.service.FlightService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +48,37 @@ public class FlightController {
         }
     }
 
+    @GetMapping("/allPage")
+    public ResponseEntity<Page<FlightInfo>> getAllFlightsPage(@PageableDefault(
+            sort = {"id"}
+    ) Pageable pageable, @RequestParam(value = "direction", required = false) String direction,
+                                                              @RequestParam(value = "property", required = false) String property) {
+        Page<FlightInfo> page = flightService.getFlightsPagesBySort(pageable, direction, property);
+        if (page.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>(page, HttpStatus.OK);
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<FlightInfo>> getFlightByParameters(@PageableDefault(
+            sort = {"flightPrice"},
+            direction = Sort.Direction.ASC
+    ) Pageable pageable, @RequestParam(value = "cityOfDeparture") String cityOfDeparture,
+                                                                  @RequestParam(value = "cityOfArrival") String cityOfArrival,
+                                                                  @RequestParam(value = "date") @DateTimeFormat(pattern = "yyyy-MM-dd")
+                                                                  LocalDate date, @RequestParam(value = "direction", required = false) String direction,
+                                                                  @RequestParam(value = "property", required = false) String property) {
+        Page<FlightInfo> flightInfoSearch = flightService.findByParameters(pageable, cityOfDeparture, cityOfArrival, date,
+                direction, property);
+        if (flightInfoSearch.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>(flightInfoSearch, HttpStatus.OK);
+        }
+    }
+
     @GetMapping("/info/{id}")
     public ResponseEntity<FlightInfo> getFlightInfoById(@PathVariable Long id) {
         FlightInfo flightById = flightService.findInfoById(id);
@@ -58,19 +93,6 @@ public class FlightController {
     public ResponseEntity<Flight> getFlightById(@PathVariable Long id) {
         Flight flight = flightService.findById(id).orElseThrow(FlightNotFoundException::new);
         return new ResponseEntity<>(flight, HttpStatus.OK);
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<List<FlightInfo>> getFlightByParameters(@RequestParam("cityOfDeparture") String cityOfDeparture,
-                                                                  @RequestParam("cityOfArrival") String cityOfArrival,
-                                                                  @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd")
-                                                                  LocalDate date) {
-        List<FlightInfo> flightInfoSearch = flightService.findByParameters(cityOfDeparture, cityOfArrival, date);
-        if (flightInfoSearch.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
-            return new ResponseEntity<>(flightInfoSearch, HttpStatus.OK);
-        }
     }
 
     @PostMapping
