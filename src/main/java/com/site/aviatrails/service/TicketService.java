@@ -26,9 +26,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -254,5 +256,12 @@ public class TicketService {
         Optional<Flight> flight = flightRepository.findById(ticket.get().getFlightId());
         flight.get().setNumberOfFreeSeats(flight.get().getNumberOfFreeSeats() + ticket.get().getNumberOfTickets());
         flightRepository.saveAndFlush(flight.get());
+    }
+
+    @Scheduled(fixedRate = 60000)
+    protected void deleteExpiredTickets() {
+        LocalDateTime currentTime = LocalDateTime.now();
+        List<Ticket> expiredTickets = ticketRepository.findByBookingExpirationTimeBefore(currentTime);
+        ticketRepository.deleteAll(expiredTickets);
     }
 }

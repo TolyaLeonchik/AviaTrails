@@ -4,9 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import lombok.Data;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
 
 @Component
 @Data
@@ -35,4 +38,12 @@ public class Ticket {
 
     @Column(name = "active_status")
     private Boolean activeStatus;
+
+    @Column(name = "booking_expiration_time")
+    private LocalDateTime bookingExpirationTime;
+
+    @PrePersist
+    private void setBookingExpirationTime() {
+        this.bookingExpirationTime = LocalDateTime.now().plusMinutes(2);
+    }
 }
