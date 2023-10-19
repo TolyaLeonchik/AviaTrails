@@ -1,15 +1,12 @@
 package com.site.aviatrails.repository;
 
 import com.site.aviatrails.domain.UserInfo;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,9 +18,6 @@ public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     static UserInfo userInfo;
 
     @BeforeAll
@@ -33,16 +27,6 @@ public class UserRepositoryTest {
         userInfo.setLastName("TestLastName");
         userInfo.setEmail("test@test.com");
         userInfo.setPhoneNumber("4789632589647");
-    }
-
-    @Test
-    @Transactional
-    void saveTest() {
-        List<UserInfo> oldList = userRepository.findAll();
-        userRepository.save(userInfo);
-        List<UserInfo> newList = userRepository.findAll();
-
-        Assertions.assertNotEquals(oldList.size(), newList.size());
     }
 
     @Test
@@ -57,6 +41,15 @@ public class UserRepositoryTest {
         UserInfo saved = userRepository.save(userInfo);
         Optional<UserInfo> newUser = userRepository.findById(saved.getId());
         Assertions.assertTrue(newUser.isPresent());
+    }
+
+    @Test
+    void saveTest() {
+        List<UserInfo> oldList = userRepository.findAll();
+        userRepository.save(userInfo);
+        List<UserInfo> newList = userRepository.findAll();
+
+        Assertions.assertNotEquals(oldList.size(), newList.size());
     }
 
     @Test
