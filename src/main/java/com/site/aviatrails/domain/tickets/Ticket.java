@@ -44,6 +44,6 @@ public class Ticket {
 
     @PrePersist
     private void setBookingExpirationTime() {
-        this.bookingExpirationTime = LocalDateTime.now().plusMinutes(2);
+        this.bookingExpirationTime = LocalDateTime.now().plusMinutes(15);
     }
 }
