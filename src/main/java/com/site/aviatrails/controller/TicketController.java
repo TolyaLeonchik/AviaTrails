@@ -8,6 +8,9 @@ import com.site.aviatrails.exception.InsufficientFunds;
 import com.site.aviatrails.security.WebSecurity;
 import com.site.aviatrails.service.TicketService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,8 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/booking")
@@ -35,8 +36,8 @@ public class TicketController {
     }
 
     @GetMapping("/allTickets")
-    public ResponseEntity<List<Ticket>> getTickets() {
-        List<Ticket> tickets = ticketService.getAllTickets();
+    public ResponseEntity<Page<Ticket>> getTickets(@PageableDefault Pageable pageable) {
+        Page<Ticket> tickets = ticketService.getAllTickets(pageable);
         if (tickets.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else {
@@ -45,8 +46,8 @@ public class TicketController {
     }
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<UserTicketInfo>> getUsersTicketsById(@PathVariable Long id) {
-        List<UserTicketInfo> tickets = ticketService.getUserTicketsInfoById(id);
+    public ResponseEntity<Page<UserTicketInfo>> getUsersTicketsById(@PathVariable Long id, @PageableDefault Pageable pageable) {
+        Page<UserTicketInfo> tickets = ticketService.getUserTicketsInfoById(id, pageable);
         if (tickets.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else {
@@ -55,9 +56,9 @@ public class TicketController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<UserTicketInfo>> getUsersTickets() {
+    public ResponseEntity<Page<UserTicketInfo>> getUsersTickets(@PageableDefault Pageable pageable) {
         Long currentId = webSecurity.currentUserid(SecurityContextHolder.getContext().getAuthentication());
-        List<UserTicketInfo> tickets = ticketService.getUserTicketsInfoById(currentId);
+        Page<UserTicketInfo> tickets = ticketService.getUserTicketsInfoById(currentId, pageable);
         if (tickets.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else {

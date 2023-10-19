@@ -21,6 +21,11 @@ import com.site.aviatrails.repository.PaymentHistoryRepository;
 import com.site.aviatrails.repository.TicketRepository;
 import com.site.aviatrails.repository.UserRepository;
 import com.site.aviatrails.validator.BookingValidator;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,11 +58,12 @@ public class TicketService {
         this.cardInfo = cardInfo;
     }
 
-    public List<Ticket> getAllTickets() {
-        return ticketRepository.findAll();
+    public Page<Ticket> getAllTickets(Pageable pageable) {
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.Direction.ASC, "id");
+        return ticketRepository.findAll(pageable);
     }
 
-    public List<UserTicketInfo> getUserTicketsInfoById(Long id) {
+    public Page<UserTicketInfo> getUserTicketsInfoById(Long id, Pageable pageable) {
 
         bookingValidator.validateTicketExistenceByPassengerId(ticketRepository.findIdsByPassengerId(id));
         bookingValidator.validateUserExistence(id);
@@ -91,7 +97,7 @@ public class TicketService {
 
             userTicketsInfo.add(userTicketInfo);
         }
-        return userTicketsInfo;
+        return new PageImpl<>(userTicketsInfo, pageable, userTicketsInfo.size());
     }
 
     @Transactional(rollbackFor = Exception.class)
