@@ -53,6 +53,22 @@ public class AirportRepositoryTest {
     }
 
     @Test
+    void updateTest() {
+        Airport newAirport = airportsRepository.save(airport);
+        newAirport.setPortCity("UPDATED");
+        Airport updatedAirport = airportsRepository.saveAndFlush(newAirport);
+        Assertions.assertEquals(updatedAirport.getPortCity(), "UPDATED");
+    }
+
+    @Test
+    void deleteTest() {
+        Airport airportSaved = airportsRepository.save(airport);
+        airportsRepository.delete(airportSaved);
+        Optional<Airport> user = airportsRepository.findById(airportSaved.getId());
+        Assertions.assertFalse(user.isPresent());
+    }
+
+    @Test
     void findIdByPortNameAndPortCityTest() {
         Airport saved = airportsRepository.save(airport);
         Long newAirportId = airportsRepository.findIdByPortNameAndPortCity(saved.getPortName(), saved.getPortCity());
