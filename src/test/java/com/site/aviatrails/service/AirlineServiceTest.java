@@ -54,23 +54,18 @@ public class AirlineServiceTest {
     }
 
     @Test
-    public void createAirline() {
-        AirportsRepository airportsRepositoryMock = Mockito.mock(AirportsRepository.class);
-        AirlinesRepository airlinesRepositoryMock = Mockito.mock(AirlinesRepository.class);
-
-        AirlineService airlineService = new AirlineService(airlinesRepositoryMock, airportsRepositoryMock);
-
-        Mockito.when(airportsRepositoryMock.existsById(eq(ID_VALUE))).thenReturn(true);
+    public void createAirlineTest() {
+        Mockito.when(airportsRepository.existsById(eq(ID_VALUE))).thenReturn(true);
 
         Airline airline = new Airline();
         airline.setAirportId(ID_VALUE);
         airlineService.createAirline(airline);
-        Mockito.verify(airportsRepositoryMock, Mockito.times(1)).existsById(eq(ID_VALUE));
-        Mockito.verify(airlinesRepositoryMock, Mockito.times(1)).save(any());
+        Mockito.verify(airportsRepository, Mockito.times(1)).existsById(eq(ID_VALUE));
+        Mockito.verify(airlinesRepository, Mockito.times(1)).save(any());
     }
 
     @Test
-    public void updateAirline() {
+    public void updateAirlineTest() {
         Mockito.when(airportsRepository.existsById(eq(ID_VALUE))).thenReturn(true);
         Airline airline = new Airline();
         airline.setAirportId(ID_VALUE);
@@ -80,7 +75,7 @@ public class AirlineServiceTest {
     }
 
     @Test
-    public void deleteAirline() {
+    public void deleteAirlineTest() {
         airlineService.deleteAirlineById(ID_VALUE);
         Mockito.verify(airlinesRepository, Mockito.times(1)).deleteById(anyLong());
     }
