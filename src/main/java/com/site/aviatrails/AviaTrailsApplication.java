@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 @OpenAPIDefinition(
         info = @Info(
                 title = "AviaTrail project",
@@ -25,10 +26,6 @@ public class AviaTrailsApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(AviaTrailsApplication.class, args);
-//
-//        log.error("ERROR LOG!!!");
-        log.info("INFO LOG");
-//        log.debug("DEBUG LOG");
     }
 
 }
