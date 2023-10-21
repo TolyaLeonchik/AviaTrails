@@ -39,8 +39,8 @@ public class AirportRepositoryTest {
     @Test
     void findByIdTest() {
         Airport saved = airportsRepository.save(airport);
-        Optional<Airport> newUser = airportsRepository.findById(saved.getId());
-        Assertions.assertTrue(newUser.isPresent());
+        Optional<Airport> newUAirport = airportsRepository.findById(saved.getId());
+        Assertions.assertTrue(newUAirport.isPresent());
     }
 
     @Test
@@ -64,8 +64,8 @@ public class AirportRepositoryTest {
     void deleteTest() {
         Airport airportSaved = airportsRepository.save(airport);
         airportsRepository.delete(airportSaved);
-        Optional<Airport> user = airportsRepository.findById(airportSaved.getId());
-        Assertions.assertFalse(user.isPresent());
+        Optional<Airport> airportSearch = airportsRepository.findById(airportSaved.getId());
+        Assertions.assertFalse(airportSearch.isPresent());
     }
 
     @Test

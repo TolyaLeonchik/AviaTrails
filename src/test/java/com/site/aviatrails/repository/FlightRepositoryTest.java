@@ -75,8 +75,8 @@ public class FlightRepositoryTest {
         setup();
         Flight flightSaved = flightRepository.save(flight);
         flightRepository.delete(flightSaved);
-        Optional<Flight> airlineSearch = flightRepository.findById(flightSaved.getId());
-        Assertions.assertFalse(airlineSearch.isPresent());
+        Optional<Flight> flightSearch = flightRepository.findById(flightSaved.getId());
+        Assertions.assertFalse(flightSearch.isPresent());
     }
 
     @Test

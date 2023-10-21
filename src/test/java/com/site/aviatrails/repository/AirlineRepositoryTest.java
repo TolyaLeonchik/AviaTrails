@@ -38,8 +38,8 @@ public class AirlineRepositoryTest {
     @Test
     void findByIdTest() {
         Airline saved = airlinesRepository.save(airline);
-        Optional<Airline> newUser = airlinesRepository.findById(saved.getId());
-        Assertions.assertTrue(newUser.isPresent());
+        Optional<Airline> newAirline = airlinesRepository.findById(saved.getId());
+        Assertions.assertTrue(newAirline.isPresent());
     }
 
     @Test
