@@ -53,10 +53,9 @@ public class SpringSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
                         auth
-                                .requestMatchers(HttpMethod.GET, "/user").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/user/{userId}")
-                                .access(((authentication, context) ->
-                                        new AuthorizationDecision(webSecurity.canAccessUser(authentication.get(), context.getRequest()))))
+                                .requestMatchers(HttpMethod.GET, "/user/all").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/user").hasAnyRole("ADMIN", "USER", "MODERATOR")
+                                .requestMatchers(HttpMethod.GET, "/user/{userId}").hasAnyRole("ADMIN", "MODERATOR")
                                 .requestMatchers(HttpMethod.POST, "/user").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/user").hasAnyRole("ADMIN", "USER", "MODERATOR")
                                 .requestMatchers(HttpMethod.DELETE, "/user/{userId}").hasRole("ADMIN")
@@ -69,7 +68,7 @@ public class SpringSecurityConfiguration {
                                 .requestMatchers(HttpMethod.PUT, "/flights").hasAnyRole("ADMIN", "MODERATOR")
                                 .requestMatchers(HttpMethod.DELETE, "/flights").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/booking/allTickets").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/booking/user/{userId}").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/booking/user/{userId}").hasAnyRole("ADMIN", "MODERATOR")
                                 .requestMatchers(HttpMethod.GET, "/booking/user").hasAnyRole("ADMIN", "USER", "MODERATOR")
                                 .requestMatchers(HttpMethod.POST, "/booking").hasAnyRole("ADMIN", "USER", "MODERATOR")
                                 .requestMatchers(HttpMethod.POST, "/booking").hasAnyRole("ADMIN", "USER", "MODERATOR")

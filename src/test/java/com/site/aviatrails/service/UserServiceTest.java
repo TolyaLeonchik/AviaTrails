@@ -9,12 +9,22 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -28,6 +38,8 @@ public class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    static UserInfo userInfo = new UserInfo();
+
     @BeforeAll
     public static void beforeAll() {
         Authentication authenticationMock = Mockito.mock(Authentication.class);
@@ -38,8 +50,17 @@ public class UserServiceTest {
 
     @Test
     public void getUsersTest() {
-        userService.getUsers();
-        Mockito.verify(userRepository, Mockito.times(1)).findAll();
+        List<UserInfo> users = new ArrayList<>();
+        users.add(userInfo);
+        Page<UserInfo> page = new PageImpl<>(users);
+
+        when(userRepository.findAll(Mockito.any(Pageable.class))).thenReturn(page);
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.ASC, "id");
+
+        Page<UserInfo> actualPage = userService.getUsers(pageable);
+
+        assertEquals(page, actualPage);
     }
 
     @Test

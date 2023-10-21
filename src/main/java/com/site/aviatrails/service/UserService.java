@@ -3,9 +3,12 @@ package com.site.aviatrails.service;
 import com.site.aviatrails.domain.UserInfo;
 import com.site.aviatrails.repository.UserRepository;
 import com.site.aviatrails.validator.PhoneNumberValidator;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -17,8 +20,9 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public List<UserInfo> getUsers() {
-        return userRepository.findAll();
+    public Page<UserInfo> getUsers(Pageable pageable) {
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.Direction.ASC, "id");
+        return userRepository.findAll(pageable);
     }
 
     public Optional<UserInfo> getUser(Long id) {

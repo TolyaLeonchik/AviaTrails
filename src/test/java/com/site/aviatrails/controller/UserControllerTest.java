@@ -2,6 +2,7 @@ package com.site.aviatrails.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.site.aviatrails.domain.UserInfo;
+import com.site.aviatrails.security.WebSecurity;
 import com.site.aviatrails.security.filter.JwtAuthenticationFilter;
 import com.site.aviatrails.service.UserService;
 import org.hamcrest.Matchers;
@@ -13,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -34,8 +39,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(value = UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
 public class UserControllerTest {
+
     @MockBean
     UserService userService;
+
+    @MockBean
+    private WebSecurity webSecurity;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -58,17 +67,19 @@ public class UserControllerTest {
 
     @Test
     public void getUsers() throws Exception {
-        Mockito.when(userService.getUsers()).thenReturn(users);
+        Page<UserInfo> userPage = new PageImpl<>(users);
+        Mockito.when(userService.getUsers(any(Pageable.class))).thenReturn(userPage);
 
-        mockMvc.perform(get("/user"))
+        mockMvc.perform(get("/user/all"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", Matchers.hasSize(1)))
-                .andExpect(jsonPath("$[0].id", Matchers.is(value.intValue())));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(1)));
     }
 
     @Test
-    public void getUserTest() throws Exception {
+    public void getUserByIdTest() throws Exception {
         Mockito.when(userService.getUser(value)).thenReturn(Optional.of(userInfo));
+        Mockito.when(webSecurity.currentUserid(any())).thenReturn(value);
 
         mockMvc.perform(get("/user/{id}", value))
                 .andExpect(status().isOk())

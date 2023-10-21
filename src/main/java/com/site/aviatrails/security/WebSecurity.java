@@ -24,22 +24,6 @@ public class WebSecurity {
         this.ticketRepository = ticketRepository;
     }
 
-    public boolean canAccessUser(Authentication authentication, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-        String pattern = "/user/";
-        int startIndex = requestURI.indexOf(pattern) + pattern.length();
-        String userId = requestURI.substring(startIndex);
-        long id = Long.parseLong(userId);
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Optional<SecurityCredentials> securityCredentials = securityCredentialsRepository.findByUserLogin(userDetails.getUsername());
-        if (securityCredentials.get().getUserRole().equals(Role.ADMIN)) {
-            return true;
-        } else if (securityCredentials.get().getUserId().equals(id)) {
-            return true;
-        }
-        return false;
-    }
-
     public boolean canAccessToDelete(Authentication authentication, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         String pattern = "/booking/refund/";
